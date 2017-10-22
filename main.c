@@ -36,10 +36,10 @@ void print_usage(char *p_name) {
 
 int main(int argc, char **argv) {
     char c;
-    rules.decks = 2;
-    rules.time = 10;
-    rules.start = 100;
-    rules.min_bet = 1;
+    rules.decks = DEFAULT_DECKS;
+    rules.time = DEFAULT_TIME;
+    rules.start = DEFAULT_START;
+    rules.min_bet = DEFAULT_BET;
 
     while ((c = getopt(argc, argv, "vhd:m:t:p:b:")) != -1) {
         switch (c) {
