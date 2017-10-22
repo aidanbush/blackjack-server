@@ -1,5 +1,5 @@
 /* Author: Aidan Bush
- * Assign: Assign 1
+ * Assign: Assign 2
  * Course: CMPT 361
  * Date:
  * File:
