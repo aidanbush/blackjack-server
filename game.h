@@ -35,13 +35,23 @@ typedef struct player_s {
 	uint32_t bet;
 	uint8_t cards[MAX_NUM_CARDS];
 	bool kicked;
+	//add players socket socket
 } player_s;
 
+typedef struct deck_s {
+	uint8_t *cards;
+	int cur_card;
+	int num_cards;
+} deck_s;
+
 typedef struct game_s {
+	deck_s deck;
 	uint8_t d_cards[MAX_NUM_CARDS];
 	player_s *players[MAX_PLAYERS];
 	int num_players;
 	int max_players;
 } game_s;
+
+void init_game();
 
 #endif /* _H */

@@ -20,6 +20,7 @@
 int v = 0;
 int port = 4420;
 game_rules rules;
+game_s game;
 
 /* prints the usage message and returns */
 void print_usage(char *p_name) {
@@ -70,5 +71,8 @@ int main(int argc, char **argv) {
                 break;
         }
     }
+
+	init_game();
+
     return 0;
 }

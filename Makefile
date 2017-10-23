@@ -12,9 +12,11 @@ CFLAGS=-Wall -std=c99 -D_POSIX_C_SOURCE=201112L -pedantic
 
 all: main
 
-main: main.o
+main: main.o game.o
 
-main.o: main.c
+main.o: main.c game.h
+
+game.o: game.c game.h
 
 clean:
 	$(RM) main *.o
