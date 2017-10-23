@@ -17,9 +17,6 @@
 /* project includes */
 #include "game.h"
 
-extern game_rules rules;
-extern game_s game;
-
 player_s *init_player(char *nick, uint32_t start_money) {
 	player_s *player = malloc(sizeof(player_s));
 	if (player == NULL)
@@ -76,7 +73,7 @@ void free_game() {
 		game.num_players = 0;
 }
 
-void shuffle_cards() {
+static void shuffle_cards() {
 	srand(time(NULL));// seed random
 	int tmp, r;
 	//swap all cards with another random card

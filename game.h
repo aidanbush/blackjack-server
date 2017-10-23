@@ -6,8 +6,8 @@
  * Description: main game logic
  */
 
-#ifndef _H
-#define _H
+#ifndef GAME_H
+#define GAME_H
 
 #define MAX_PLAYERS 7
 
@@ -52,6 +52,21 @@ typedef struct game_s {
 	int max_players;
 } game_s;
 
+extern game_rules rules;
+extern game_s game;
+
+player_s *init_player(char *nick, uint32_t start_money);
+
+void free_player(player_s *p);
+
 void init_game();
 
-#endif /* _H */
+void free_game();
+
+int init_deck();
+
+int add_player(char *player_name);
+
+void kick_player(player_s *p);
+
+#endif /* GAME_H */
