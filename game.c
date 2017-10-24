@@ -46,6 +46,14 @@ player_s *init_player(char *nick, uint32_t start_money) {
     return player;
 }
 
+// moves player into userlist and then frees them
+// if returns response code from add_player_to_list
+int delete_player(player_s *p) {
+    int add = add_player_to_list(p->nick, p->money);
+    free_player(p);
+    return add;
+}
+
 void free_player(player_s *p) {
     free(p->nick);
     free(p);
