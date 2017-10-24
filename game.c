@@ -144,7 +144,7 @@ int init_user_list() {
 }
 
 // TODO replace with real hash function
-int hash(char *str) {
+static int hash(char *str) {
     int h = 0;
     for (int i = 0; i < strlen(str); i++) {
         h += str[i];
@@ -189,8 +189,19 @@ static int resize_userlist() {
     return 1;
 }
 
-int add_to_list(char *nick, uint32_t money) {
+int get_user(char *name) {
+    for (int i = 0; i < userlist.max_users; i++)
+       if (userlist.users[i] != NULL)
+            if (strncmp(name, userlist.users[i]->name, PLAYER_NAME_LEN) == 0)
+                return i;
+    return -1; // not found
+}
+int add_player_to_list(char *nick, uint32_t money) {
     // check if already in if so update
+    int i;
+    if ((i = get_user(nick)) != -1) {
+        userlist.users[i]->money = money;
+    }
 
     // check if >= 66% full
     if (userlist.cur_users >= userlist.max_users * 2 / 3) {

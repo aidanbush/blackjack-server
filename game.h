@@ -81,4 +81,10 @@ int add_player(char *player_name);
 
 void kick_player(player_s *p);
 
+int init_user_list();
+
+int get_user(char *name);
+
+int add_player_to_list(char *name, uint32_t money);
+
 #endif /* GAME_H */
