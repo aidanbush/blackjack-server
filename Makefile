@@ -8,7 +8,7 @@
 CC=gcc
 CFLAGS=-Wall -std=c99 -D_POSIX_C_SOURCE=201112L -pedantic
 
-.PHONEY: all clean
+.PHONY: all clean
 
 all: main
 

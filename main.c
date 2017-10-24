@@ -21,11 +21,12 @@ int v = 0;
 int port = 4420;
 game_rules rules;
 game_s game;
+userlist_s userlist;
 
 /* prints the usage message and returns */
 void print_usage(char *p_name) {
     printf("Usage : %s  [-options]\n"
-        "Blackjack server as specified in RFC ???\n\n"
+        "Blackjack server as specified in RFC n\n\n"
         "Options:\n"
         "    -d number of decks default 2\n"
         "    -m amount of money default 100\n"
@@ -36,7 +37,7 @@ void print_usage(char *p_name) {
 }
 
 int main(int argc, char **argv) {
-    char c;
+    int c;
     rules.decks = DEFAULT_DECKS;
     rules.time = DEFAULT_TIME;
     rules.start = DEFAULT_START;
@@ -66,13 +67,18 @@ int main(int argc, char **argv) {
             case 'b':
                 printf("b:%d\n", atoi(optarg));
                 break;
+            case ':':
+                printf("missing arg\n");
+                break;
             case '?':
+                printf("unkown option\n");
+            default:
                 printf("error\n");
                 break;
         }
     }
 
-	init_game();
+    init_game();
 
     return 0;
 }
