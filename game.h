@@ -81,7 +81,9 @@ int add_player(char *player_name);
 
 void kick_player(player_s *p);
 
-int init_user_list();
+int init_userlist();
+
+void free_userlist();
 
 int get_user(char *name);
 

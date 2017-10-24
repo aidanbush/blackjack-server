@@ -141,7 +141,7 @@ void kick_player(player_s *p) {
 }
 
 // deal with being called multiple times
-int init_user_list() {
+int init_userlist() {
     userlist.users = calloc(START_USER_LIST_LEN, sizeof(user_s));
     if (userlist.users == NULL)
         return -1;
@@ -149,6 +149,24 @@ int init_user_list() {
     userlist.cur_users = 0;
     userlist.max_users = START_USER_LIST_LEN;
     return 1;
+}
+
+static void free_user(user_s *user) {
+    free(user->name);
+    free(user);
+}
+
+void free_userlist() {
+    //free all users
+    for (int i = 0; i < userlist.max_users; i++)
+        if (userlist.users[i] != NULL)
+            free_user(userlist.users[i]);
+    //free array
+    free(userlist.users);
+
+    userlist.cur_users = 0;
+    userlist.max_users = 0;
+    userlist.users = NULL;
 }
 
 // TODO replace with real hash function
@@ -205,10 +223,15 @@ int get_user(char *name) {
     return -1; // not found
 }
 int add_player_to_list(char *nick, uint32_t money) {
+    // if no space and must be reinited
+    if (userlist.max_users == 0) {
+        return -1;
+    }
     // check if already in if so update
     int i;
     if ((i = get_user(nick)) != -1) {
         userlist.users[i]->money = money;
+        return 2;
     }
 
     // check if >= 66% full
