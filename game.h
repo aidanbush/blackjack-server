@@ -69,21 +69,32 @@ extern game_s game;
 
 player_s *init_player(char *nick, uint32_t start_money);
 
-void free_player(player_s *p);
+int delete_player(int i);
 
 void init_game();
 
 void free_game();
 
-int init_deck();
-
+// player functions
 int add_player(char *player_name);
+
+int64_t get_player_money(int i);
+
+int get_player(char *nick);
 
 void kick_player(player_s *p);
 
+// deck functions
+int init_deck();
+
+void free_deck();
+
+// userlist funcitons
 int init_userlist();
 
 void free_userlist();
+
+uint64_t get_user_money(int i);
 
 int get_user(char *name);
 

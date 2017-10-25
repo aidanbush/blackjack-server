@@ -6,7 +6,7 @@
 # Description: it's a Makefile
 
 CC=gcc
-CFLAGS=-Wall -std=c99 -D_POSIX_C_SOURCE=201112L -pedantic
+CFLAGS=-Wall -std=c99 -D_POSIX_C_SOURCE=201112L -pedantic -g
 
 .PHONY: all clean
 

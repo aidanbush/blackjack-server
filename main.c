@@ -79,6 +79,14 @@ int main(int argc, char **argv) {
     }
 
     init_game();
+    init_deck();
+    init_userlist();
+
+    // call main loop
+
+    free_game();
+    free_deck();
+    free_userlist();
 
     return 0;
 }

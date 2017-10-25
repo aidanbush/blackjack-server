@@ -12,6 +12,9 @@
 #include <time.h>
 #include <stdlib.h>
 
+// remove used for debugging
+#include <stdio.h>
+
 /* system libraries */
 
 /* project includes */
@@ -46,35 +49,45 @@ player_s *init_player(char *nick, uint32_t start_money) {
     return player;
 }
 
-// moves player into userlist and then frees them
-// if returns response code from add_player_to_list
-int delete_player(player_s *p) {
-    int add = add_player_to_list(p->nick, p->money);
-    free_player(p);
-    return add;
-}
-
-void free_player(player_s *p) {
+static void free_player(player_s *p) {
     free(p->nick);
     free(p);
+}
+
+// moves player into userlist and then frees them
+// if returns response code from add_player_to_list
+int delete_player(int i) {
+    player_s *p = game.players[i];
+    if (p == NULL) {
+        fprintf(stderr, "p == NULL\n");
+        return -1;
+    }
+    int add = add_player_to_list(p->nick, p->money);
+    free_player(p);
+    game.players[i] = NULL;
+    return add;
 }
 
 void init_game() {
     for (int i = 0; i < MAX_NUM_CARDS; i++)
         game.d_cards[i] = 0;
 
-    for (int i = 1; 0< MAX_PLAYERS; i++)
+    for (int i = 0; i < (MAX_PLAYERS); i++)
         game.players[i] = NULL;
 
     game.num_players = 0;
     game.max_players = MAX_PLAYERS;
+
+    game.deck.cards = NULL;
+    game.deck.cur_card = 0;
+    game.deck.num_cards = 0;
 }
 
 void free_game() {
     // free all players
     for (int i = 0; i < game.max_players; i++) {
         if (game.players[i] != NULL) {
-            free(game.players[i]);
+            free_player(game.players[i]);
             game.players[i] = NULL;
             game.num_players--;
         }
@@ -83,6 +96,50 @@ void free_game() {
     if (game.num_players != 0)
         game.num_players = 0;
 }
+
+int add_player(char *player_name) {
+    // TODO: check if nick is not out of money or their money is below min bet
+    uint32_t money = rules.start;
+    if (money < rules.min_bet)
+        return -1;
+
+    player_s *player = init_player(player_name, money);
+
+    if (player == NULL)
+        return -1;
+
+    for (int i = 0; i < game.max_players; i++) {
+        if (game.players[i] == NULL) {
+            game.players[i] = player;
+            return 1;
+        }
+    }
+
+    // no spot available
+    free_player(player);
+    return -1;
+}
+
+// int64_t could introduce bugs could switch with
+int64_t get_player_money(int i) {
+    if (game.players[i] == NULL)
+        return -1;
+    return game.players[i]->money;
+}
+
+int get_player(char *nick) {
+    for (int i = 0; i < game.max_players; i++)
+        if (game.players[i] != NULL)
+            if (strcmp(nick, game.players[i]->nick) == 0)
+                return i;
+    return -1;
+}
+
+void kick_player(player_s *p) {
+    p->kicked = true;
+}
+
+// DECK FUNCTIONS
 
 static void shuffle_cards() {
     srand(time(NULL));// seed random
@@ -113,32 +170,14 @@ int init_deck() {
     return 52 * rules.decks;
 }
 
-int add_player(char *player_name) {
-    // check if nick is not out of money or their money is below min bet
-    uint32_t money = rules.start;
-    if (money < rules.min_bet)
-        return -1;
-
-    player_s *player = init_player(player_name, money);
-
-    if (player == NULL)
-        return -1;
-
-    for (int i = 0; i < game.max_players; i++) {
-        if (game.players[i] != NULL) {
-            game.players[i] = player;
-            return 1;
-        }
-    }
-
-    // no spot available
-    free_player(player);
-    return -1;
+void free_deck() {
+    //free deck
+    free(game.deck.cards);
+    //set null
+    game.deck.cards = NULL;
 }
 
-void kick_player(player_s *p) {
-    p->kicked = true;
-}
+// USERLIST FUNCTIONS
 
 // deal with being called multiple times
 int init_userlist() {
@@ -185,10 +224,11 @@ static int hash_user(user_s *user) {
 
     int h = hash(user->name) % userlist.max_users;
 
+    // deal with error when cur_users is incorrect
     while (userlist.users[h] != NULL)
         h = (h + 1) % userlist.max_users;
     userlist.users[h] = user;
-    return 1;
+    return h;
 }
 
 static int resize_userlist() {
@@ -215,6 +255,14 @@ static int resize_userlist() {
     return 1;
 }
 
+uint64_t get_user_money(int i) {
+    if (i < 0 || i > userlist.max_users)
+        return -1;
+    if (userlist.users == NULL || userlist.users[i] == NULL)
+        return -1;
+    return userlist.users[i]->money;
+}
+
 int get_user(char *name) {
     for (int i = 0; i < userlist.max_users; i++)
        if (userlist.users[i] != NULL)
@@ -222,31 +270,30 @@ int get_user(char *name) {
                 return i;
     return -1; // not found
 }
+
 int add_player_to_list(char *nick, uint32_t money) {
     // if no space and must be reinited
-    if (userlist.max_users == 0) {
+    if (userlist.max_users == 0)
         return -1;
-    }
     // check if already in if so update
     int i;
     if ((i = get_user(nick)) != -1) {
         userlist.users[i]->money = money;
-        return 2;
+        return i;
     }
 
     // check if >= 66% full
-    if (userlist.cur_users >= userlist.max_users * 2 / 3) {
-        if (resize_userlist() == -1) {
+    if (userlist.cur_users >= userlist.max_users * 2 / 3)
+        if (resize_userlist() == -1)
             return -1;
-        }
-    }
+
     // create user
     user_s *new_user = malloc(sizeof(user_s));
     if (new_user == NULL)
         return -1;
 
     // allocate space for name
-    new_user->name = malloc(sizeof(char) * (PLAYER_NAME_LEN + 1));
+    new_user->name = calloc(PLAYER_NAME_LEN + 1, sizeof(char));
     if (new_user->name == NULL) {
         free(new_user);
         return -1;
@@ -254,11 +301,13 @@ int add_player_to_list(char *nick, uint32_t money) {
     new_user->name = strncpy(new_user->name, nick, PLAYER_NAME_LEN);
     //add nul terminator to be safe
     new_user->name[PLAYER_NAME_LEN] = '\0';
+    new_user->money = money;
+
     // add
-    if (hash_user(new_user) == -1) {
+    if ((i = hash_user(new_user)) == -1) {
         free(new_user->name);
         free(new_user);
         return -1;
     }
-    return 1;
+    return i;
 }
