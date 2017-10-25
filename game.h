@@ -10,7 +10,6 @@
 #define GAME_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #define MAX_PLAYERS 7
 
@@ -45,7 +44,7 @@ typedef struct player_s {
     uint32_t money;
     uint32_t bet;
     uint8_t cards[MAX_NUM_CARDS];
-    bool kicked;
+    int kicked;
     //add players socket socket
 } player_s;
 

@@ -8,7 +8,6 @@
 
 /* standard libraries */
 #include <string.h>
-#include <stdbool.h>
 #include <time.h>
 #include <stdlib.h>
 
@@ -44,7 +43,7 @@ player_s *init_player(char *nick, uint32_t start_money) {
         player->cards[i] = 0;
     player->money = start_money;
     player->bet = 0;
-    player->kicked = false;
+    player->kicked = 0;
 
     return player;
 }
@@ -139,7 +138,7 @@ int get_player(char *nick) {
 }
 
 void kick_player(player_s *p) {
-    p->kicked = true;
+    p->kicked = 1;
 }
 
 // DECK FUNCTIONS
