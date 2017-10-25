@@ -69,18 +69,21 @@ int delete_player(int i) {
 }
 
 void init_game() {
-    for (int i = 0; i < MAX_NUM_CARDS; i++)
+    for (int i = 0; i < (MAX_NUM_CARDS); i++)
         game.d_cards[i] = 0;
+
+    game.d_shown_cards = 0;
 
     for (int i = 0; i < (MAX_PLAYERS); i++)
         game.players[i] = NULL;
 
     game.num_players = 0;
-    game.max_players = MAX_PLAYERS;
+    game.max_players = (MAX_PLAYERS);
 
     game.deck.cards = NULL;
     game.deck.cur_card = 0;
     game.deck.num_cards = 0;
+    game.seq_num = 0;
 }
 
 void free_game() {
