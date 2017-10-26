@@ -13,6 +13,7 @@
 
 /* project includes */
 #include "game.h"
+#include "packet.h"
 
 userlist_s userlist;
 game_rules rules;

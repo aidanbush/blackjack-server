@@ -1,0 +1,16 @@
+/* Author: Aidan Bush
+ * Assign: Assign 2
+ * Course: CMPT 361
+ * Date: Oct 25, 17
+ * File: packet.h
+ * Description:
+ */
+
+#ifndef PACKET_H
+#define PACKET_H
+
+uint8_t *create_status_packet(uint8_t player);
+
+int validate_packet(uint8_t *packet_1, uint8_t *packet_2);
+
+#endif /* PACKET_H */
