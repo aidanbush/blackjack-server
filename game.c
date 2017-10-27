@@ -105,7 +105,7 @@ void free_game() {
 
 int add_player(char *player_name, struct sockaddr_storage store) {
     //check if player with same nick already there
-    if (get_player(player_name) == -1) {
+    if (get_player(player_name) != -1) {
         return -2;
     }
 
