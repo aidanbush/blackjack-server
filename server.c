@@ -97,7 +97,7 @@ static int broadcast_state(int player) {
             //send msg
             if (sendto(sfd, packet, STATUS_LEN, 0,
                         (struct sockaddr *) &game.players[i]->sock,
-                        sizeof(&game.players[i]->sock)) != STATUS_LEN)
+                        sizeof(game.players[i]->sock)) != STATUS_LEN)
                 fprintf(stderr, "error in sending to player %d\n", i);
     return 1;
 }
@@ -112,7 +112,7 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     if (msgstr != NULL)
         strncpy((char *) &packet[2], msgstr, ERROR_MSG_LEN);
 
-    int len = sendto(sfd, packet, ERROR_LEN, 0, (struct sockaddr *) dest, sizeof(dest));
+    int len = sendto(sfd, packet, ERROR_LEN, 0, (struct sockaddr *) dest, sizeof(&dest));
     if (len != ERROR_LEN) {
         perror("sendto");
         fprintf(stderr, "ERROR SEND LEN got:%d\n", len);
