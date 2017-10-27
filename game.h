@@ -105,10 +105,10 @@ int init_userlist();
 
 void free_userlist();
 
-uint64_t get_user_money(int i);
+uint64_t get_user_money(char *nick);
 
-int get_user(char *name);
+int get_user(char *nick);
 
-int add_player_to_list(char *name, uint32_t money);
+int add_player_to_list(char *nick, uint32_t money);
 
 #endif /* GAME_H */

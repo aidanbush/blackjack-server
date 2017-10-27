@@ -103,7 +103,10 @@ void free_game() {
 
 int add_player(char *player_name) {
     // TODO: grab from userlist if they are there
-    uint32_t money = rules.start;
+    uint32_t money;//test -----------------------------------------
+    if ((money = get_user_money(player_name)) == -1)
+        money = rules.start;
+
     if (money < rules.min_bet)
         return -1;
 
@@ -268,7 +271,10 @@ static int resize_userlist() {
     return 1;
 }
 
-uint64_t get_user_money(int i) {
+uint64_t get_user_money(char *nick) {
+    int i;
+    if ((i = get_user(nick)) == -1)
+        return -1;
     if (i < 0 || i > userlist.max_users)
         return -1;
     if (userlist.users == NULL || userlist.users[i] == NULL)

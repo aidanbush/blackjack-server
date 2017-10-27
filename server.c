@@ -170,7 +170,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
 
     //add player
     if (add_player(nick) == -1) {//need to also add connection information
-        return -1;//if error return error dont respond to save memory
+        return -1;//if error return error dont respond to save memory???--------------
     }
 
     return 1;//success

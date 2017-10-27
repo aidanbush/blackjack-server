@@ -82,6 +82,13 @@ int main() {
 
     // play card
     // modify money
+    printf("modify players money\n");
+    game.players[0]->money -= 10;
+    test_money -= 10;
+    if (get_player_money(test1_p) == (DEFAULT_START - 10))
+        printf("\tsuccessfully subtracted money\n");
+    else
+        fprintf(stderr, "\tERROR: in subtracting players money\n");
 
     // delete player
     printf("deleting player\n");
@@ -98,7 +105,7 @@ int main() {
         fprintf(stderr, "\tERROR: player was not succesfully added\n");
 
     printf("testing if player has correct balance in userlist\n");
-    uint32_t money = get_user_money(user_i);
+    uint32_t money = get_user_money("test1");
     if (money == test_money)
         printf("\tcorrect balance\n");
     else
