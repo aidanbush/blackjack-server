@@ -218,7 +218,7 @@ void server() {
         timeout.tv_sec = 0;
         timeout.tv_usec = 250e3;
 
-        nrdy = select(sfd, &readfds, NULL, NULL, &timeout);
+        nrdy = select(sfd + 1, &readfds, NULL, NULL, &timeout);
         if (nrdy == -1) {
             fprintf(stderr, "ERROR\n");
             continue;
@@ -230,7 +230,7 @@ void server() {
         }
 
         fprintf(stderr, "got msg\n");
-        recv_len = recvfrom(sfd + 1, &packet, sizeof(packet), 0,
+        recv_len = recvfrom(sfd, &packet, sizeof(packet), 0,
                             (struct sockaddr*) &recv_store, &recv_addr_len);
 
         opcode = get_opcode(packet);
