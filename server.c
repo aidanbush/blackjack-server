@@ -151,15 +151,15 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //if no space
     if (game.num_players >= game.max_players) {
         fprintf(stderr, "send error SEATS\n");
-        send_error(ERROR_OP_SEATS, &recv_store, "");
         //send error message
+        send_error(ERROR_OP_SEATS, &recv_store, "");
         return -1;
     }
 
     // packet length incorrect
     if (len != CONNECT_LEN) {
         //send error message
-        fprintf(stderr, "send error CONNECT_LEN\n");
+        fprintf(stderr, "send error CONNECT_LEN%d\n", len);
         send_error(ERROR_OP_GEN, &recv_store, "");
         //return error
         return -1;
