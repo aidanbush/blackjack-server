@@ -10,16 +10,14 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-
-#include <stdio.h>
+#include <stdio.h> // make sure used
 
 /* system libraries */
 #include <arpa/inet.h>
 
 /* project includes */
 #include "game.h"
-
-#define STATUS_LEN 320
+#include "packet.h"
 
 #define OPCODE_STATUS   0
 #define OPCODE_CONNECT  1
@@ -31,27 +29,27 @@
 #define OPCODE_MESSAGE  7
 #define OPCODE_ACK      8
 
-#define VALIDATE_OFF    5
-#define VALIDATE_LEN    ((STATUS_LEN) - (VALIDATE_OFF))
-
 // offset defines
 #define OFF_OPCODE          0
-#define OFF_RESPONCE_CODE   1
-#define OFF_SEQ_NUM         5
-#define OFF_MIN_BET         7
-#define OFF_PLAYER          11
-#define OFF_D_CARDS         12
+#define OFF_RESPONCE_CODE   (OFF_OPCODE) + 1
+#define OFF_SEQ_NUM         (OFF_RESPONCE_CODE) + 4
+#define OFF_MIN_BET         (OFF_SEQ_NUM) + 2
+#define OFF_PLAYER          (OFF_MIN_BET) + 4
+#define OFF_D_CARDS         (OFF_PLAYER) + 1
 // player offsets
-#define OFF_PLAYER_START    33
+#define OFF_PLAYER_START    (OFF_D_CARDS) + 21
 #define OFF_PLAYER_BANK     12
-#define OFF_PLAYER_BET      16
-#define OFF_PLAYER_CARDS    20
+#define OFF_PLAYER_BET      (OFF_PLAYER_BANK) + 4
+#define OFF_PLAYER_CARDS    (OFF_PLAYER_BET) + 4
 #define OFF_PLAYER_LEN      41
+
+#define VALIDATE_OFF    OFF_SEQ_NUM // start at seqnum
+#define VALIDATE_LEN    ((STATUS_LEN) - (VALIDATE_OFF))
 
 static void packet_players(uint8_t *packet) {
     int p_off;
     //for each player
-    for (int i = 0; i < MAX_PLAYERS; i++) {
+    for (int i = 0; i < (MAX_PLAYERS); i++) {
         if (game.players[i] == NULL)
             continue;
         p_off = (OFF_PLAYER_START) + (OFF_PLAYER_LEN) * i;
@@ -72,15 +70,15 @@ static void packet_players(uint8_t *packet) {
 
 static void dealer_cards(uint8_t *packet) {
     // for all shown cards show them set them
-    for (int i = 0; i < game.d_shown_cards && i < MAX_NUM_CARDS; i++)
+    for (int i = 0; i < game.d_shown_cards && i < (MAX_NUM_CARDS); i++)
         packet[OFF_D_CARDS + i] = game.d_cards[i];
 }
 
 static uint8_t *create_packet(uint8_t player, uint8_t opcode) {
-    uint8_t *packet = malloc(sizeof(uint8_t) * STATUS_LEN);
+    uint8_t *packet = malloc(sizeof(uint8_t) * (STATUS_LEN));
     if (packet == NULL)
         return NULL;
-    uint8_t *tmp_packet = memset(packet, 0, STATUS_LEN);
+    uint8_t *tmp_packet = memset(packet, 0, (STATUS_LEN));
     if (tmp_packet == NULL) {
         free(packet);
         return NULL;
@@ -90,13 +88,13 @@ static uint8_t *create_packet(uint8_t player, uint8_t opcode) {
     *packet = opcode;
 
     // Seqnum
-    *((uint8_t *)(packet + OFF_SEQ_NUM)) = game.seq_num++;
+    *((uint8_t *)(packet + (OFF_SEQ_NUM))) = game.seq_num++;
 
     // min_bet
-    *((uint32_t *)(packet + OFF_MIN_BET)) = htonl(rules.min_bet);
+    *((uint32_t *)(packet + (OFF_MIN_BET))) = htonl(rules.min_bet);
 
     // active player
-    *((uint8_t *)(packet + OFF_PLAYER)) = player;
+    *((uint8_t *)(packet + (OFF_PLAYER))) = player;
 
     // dealer cards
     dealer_cards(packet);
@@ -108,11 +106,11 @@ static uint8_t *create_packet(uint8_t player, uint8_t opcode) {
 }
 
 uint8_t *create_status_packet(uint8_t player) {
-    return create_packet(player, OPCODE_STATUS);
+    return create_packet(player, (OPCODE_STATUS));
 }
 
 int validate_packet(uint8_t *packet_1, uint8_t *packet_2) {
-    return memcmp(packet_1 + VALIDATE_OFF, packet_2 + VALIDATE_OFF, VALIDATE_LEN);
+    return memcmp(packet_1 + (VALIDATE_OFF), packet_2 + (VALIDATE_OFF), (VALIDATE_LEN));
 }
 
 uint32_t get_bet(uint8_t *packet) {

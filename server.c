@@ -21,6 +21,7 @@
 
 /* project includes */
 #include "packet.h"
+#include "game.h"
 
 #define BACKLOG 5
 #define PORT "4420"
@@ -140,6 +141,11 @@ static int init_server() {
 */
 
 void server() {
+    uint8_t *packet = malloc(sizeof(uint8_t) * STATUS_LEN);
+    if (packet == NULL) {
+        return;
+    }
+
     int sfd = init_server();
     if (sfd == -1) {
         fprintf(stderr, "unable to create server\n");
@@ -150,8 +156,11 @@ void server() {
     FD_ZERO(&mfds);
     FD_SET(sfd, &mfds);
 
-    int nrdy;
+    int nrdy, opcode;
     struct timeval timeout;
+    struct sockaddr recv_addr;
+    socklen_t recv_addr_len = sizeof(recv_addr);
+    int recv_len;
 
     // main loop
     while(1/*interrupt atomic type variable*/) {
@@ -172,7 +181,9 @@ void server() {
         }
 
         printf("got msg\n");
-        recvmsg(sfd, NULL, 0);
+        recv_len = recvfrom(sfd, packet, STATUS_LEN, 0, &recv_addr, &recv_addr_len);
+
+        opcode = get_opcode(packet);
 
         //switch on opcode
             //each opcode calls different function
