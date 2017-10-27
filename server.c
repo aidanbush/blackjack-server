@@ -125,26 +125,27 @@ static int init_server() {
     //return success
 }*/
 
-/*int connect(packet) {
+static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     //if no space
+    if (len != CONNECT_LEN) {
         //send error message
         //close connection???
         //return error
+        return -1;
+    }
 
+    char *nick = get_connect_nick(packet);
     //add player
+    add_player(nick);
     //if error return error
 
     //set inactive
 
-    //return success
+    return 1;//success
 }
-*/
 
 void server() {
-    uint8_t *packet = malloc(sizeof(uint8_t) * STATUS_LEN);
-    if (packet == NULL) {
-        return;
-    }
+    uint8_t packet[MAX_PACKET_LEN];
 
     int sfd = init_server();
     if (sfd == -1) {
@@ -158,8 +159,8 @@ void server() {
 
     int nrdy, opcode;
     struct timeval timeout;
-    struct sockaddr recv_addr;
-    socklen_t recv_addr_len = sizeof(recv_addr);
+    struct sockaddr_storage recv_store;
+    socklen_t recv_addr_len = sizeof(recv_store);
     int recv_len;
 
     // main loop
@@ -181,12 +182,20 @@ void server() {
         }
 
         printf("got msg\n");
-        recv_len = recvfrom(sfd, packet, STATUS_LEN, 0, &recv_addr, &recv_addr_len);
+        recv_len = recvfrom(sfd, &packet, sizeof(packet), 0,
+                            (struct sockaddr*) &recv_store, &recv_addr_len);
 
         opcode = get_opcode(packet);
 
         //switch on opcode
+        switch (opcode) {
             //each opcode calls different function
+            case OPCODE_CONNECT:
+                op_connect(packet, recv_len, recv_store);
+                break;
+            default:
+                break;
+        }
         //if time up kick
         //if time up forward messages (messages are only send here)
         //check if state needs to be updated

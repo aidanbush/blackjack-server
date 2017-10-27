@@ -19,16 +19,6 @@
 #include "game.h"
 #include "packet.h"
 
-#define OPCODE_STATUS   0
-#define OPCODE_CONNECT  1
-#define OPCODE_BET      2
-#define OPCODE_STAND    3
-#define OPCODE_HIT      4
-#define OPCODE_QUIT     5
-#define OPCODE_ERROR    6
-#define OPCODE_MESSAGE  7
-#define OPCODE_ACK      8
-
 // offset defines
 #define OFF_OPCODE          0
 #define OFF_RESPONCE_CODE   (OFF_OPCODE) + 1
@@ -45,6 +35,8 @@
 
 #define VALIDATE_OFF    OFF_SEQ_NUM // start at seqnum
 #define VALIDATE_LEN    ((STATUS_LEN) - (VALIDATE_OFF))
+
+#define CONNECT_NICK_OFF 1
 
 static void packet_players(uint8_t *packet) {
     int p_off;
@@ -123,4 +115,8 @@ uint8_t get_opcode(uint8_t *packet) {
     if (packet == NULL)
         return UINT8_MAX;
     return *packet;
+}
+
+char *get_connect_nick(uint8_t *packet) {
+    return (char *) (packet + CONNECT_NICK_OFF);
 }
