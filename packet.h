@@ -9,6 +9,7 @@
 #ifndef PACKET_H
 #define PACKET_H
 
+//opcodes
 #define OPCODE_STATUS   0
 #define OPCODE_CONNECT  1
 #define OPCODE_BET      2
@@ -19,14 +20,23 @@
 #define OPCODE_MESSAGE  7
 #define OPCODE_ACK      8
 
-#define STATUS_LEN 320
-#define CONNECT_LEN 13
-#define BET_LEN (STATUS_LEN)
-#define STAND_LEN (STATUS_LEN)
-#define HIT_LEN (STATUS_LEN)
-#define QUIT_LEN (STATUS_LEN)
-#define ERROR_LEN 142
-#define MESSAGE_LEN 5
+// error opcodes
+#define ERROR_OP_GEN        0
+#define ERROR_OP_MONEY      1
+#define ERROR_OP_SEATS      2
+#define ERROR_OP_NICK_TAKEN 3
+#define ERROR_OP_NICK_INV   4
+#define ERROR_OP_TIME       5
+
+// packet lengths
+#define STATUS_LEN      320
+#define CONNECT_LEN     13
+#define BET_LEN         (STATUS_LEN)
+#define STAND_LEN       (STATUS_LEN)
+#define HIT_LEN         (STATUS_LEN)
+#define QUIT_LEN        (STATUS_LEN)
+#define ERROR_LEN       142
+#define MESSAGE_LEN     5
 
 #define MAX_PACKET_LEN (STATUS_LEN)
 

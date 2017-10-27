@@ -79,6 +79,27 @@ static int init_server() {
     return sfd;
 }
 
+/*static int send_error(int error_opcode, destination, string of description) {
+    uint8_t packet[ERROR_LEN];
+    //memset 0
+    switch (error_opcode) {
+        case ERROR_OP_GEN:
+            break;
+        case ERROR_OP_MONEY:
+            break;
+        case ERROR_OP_SEATS:
+            break;
+        case ERROR_OP_NICK_TAKEN:
+            break;
+        case ERROR_OP_NICK_INV:
+            break;
+        case ERROR_OP_TIME:
+            break;
+        default:
+            break;
+    }
+}*/
+
 /*int ack(packet) {
     //if acked msg exists
         //remove acked msg from buffer
@@ -127,6 +148,12 @@ static int init_server() {
 
 static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     //if no space
+    if (game.num_players >= game.max_players) {
+        //send error message
+        return -1;
+    }
+
+    // packet length incorrect
     if (len != CONNECT_LEN) {
         //send error message
         //close connection???
@@ -135,11 +162,16 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     }
 
     char *nick = get_connect_nick(packet);
-    //add player
-    add_player(nick);
-    //if error return error
+    // verify nickname
+    if (valid_nick(nick) == -1) {
+        //send error message
+        return -1;
+    }
 
-    //set inactive
+    //add player
+    if (add_player(nick) == -1) {//need to also add connection information
+        return -1;//if error return error dont respond to save memory
+    }
 
     return 1;//success
 }
@@ -192,6 +224,18 @@ void server() {
             //each opcode calls different function
             case OPCODE_CONNECT:
                 op_connect(packet, recv_len, recv_store);
+                break;
+            case OPCODE_BET:
+                break;
+            case OPCODE_STAND:
+                break;
+            case OPCODE_HIT:
+                break;
+            case OPCODE_QUIT:
+                break;
+            case OPCODE_MESSAGE:
+                break;
+            case OPCODE_ACK:
                 break;
             default:
                 break;

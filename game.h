@@ -44,8 +44,8 @@ typedef struct player_s {
     uint32_t money;
     uint32_t bet;
     uint8_t cards[MAX_NUM_CARDS];
-    int kicked;
-    //add players socket socket
+    int active; // TODO switch to enum
+    //add players socket info
 } player_s;
 
 typedef struct deck_s {
@@ -92,6 +92,8 @@ int64_t get_player_money(int i);
 int get_player(char *nick);
 
 void kick_player(player_s *p);
+
+int valid_nick(char *nick);
 
 // deck functions
 int init_deck();

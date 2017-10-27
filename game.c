@@ -10,6 +10,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 // remove used for debugging
 #include <stdio.h>
@@ -43,7 +44,7 @@ player_s *init_player(char *nick, uint32_t start_money) {
         player->cards[i] = 0;
     player->money = start_money;
     player->bet = 0;
-    player->kicked = 0;
+    player->active = 0;
 
     return player;
 }
@@ -101,7 +102,7 @@ void free_game() {
 }
 
 int add_player(char *player_name) {
-    // TODO: check if nick is not out of money or their money is below min bet
+    // TODO: grab from userlist if they are there
     uint32_t money = rules.start;
     if (money < rules.min_bet)
         return -1;
@@ -139,7 +140,16 @@ int get_player(char *nick) {
 }
 
 void kick_player(player_s *p) {
-    p->kicked = 1;
+    p->active = -1;
+}
+
+int valid_nick(char *nick) {
+    //loop through everything
+    for (int i = 0; i < PLAYER_NAME_LEN && nick[i] != '\0'; i++) {
+        if (!isalnum(nick[i]))//if not alphanumeric
+            return -1;
+    }
+    return 1;
 }
 
 // DECK FUNCTIONS
