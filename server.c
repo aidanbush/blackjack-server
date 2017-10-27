@@ -150,6 +150,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     fprintf(stderr, "GOT CONNECT\n");
     //if no space
     if (game.num_players >= game.max_players) {
+        fprintf(stderr, "send error SEATS\n");
         send_error(ERROR_OP_SEATS, &recv_store, "");
         //send error message
         return -1;
@@ -158,7 +159,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     // packet length incorrect
     if (len != CONNECT_LEN) {
         //send error message
-        fprintf(stderr, "SEND ERROR MSG\n");
+        fprintf(stderr, "send error CONNECT_LEN\n");
         send_error(ERROR_OP_GEN, &recv_store, "");
         //return error
         return -1;
@@ -168,6 +169,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //copy nick into array on stack with null terminator;
     char new_nick[PLAYER_NAME_LEN + 1]; // TODO test---------------------
     if (strncpy(new_nick, nick, PLAYER_NAME_LEN) == NULL) {
+        fprintf(stderr, "send error strncpy fail\n");
         send_error(ERROR_OP_GEN, &recv_store, "");
         return -1;
     }
@@ -175,6 +177,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     // verify nickname
     if (valid_nick(new_nick) == -1) {
         //send error message
+        fprintf(stderr, "send error invalid nick\n");
         send_error(ERROR_OP_NICK_INV, &recv_store, "");
         return -1;
     }
@@ -182,10 +185,12 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //add player
     int err = add_player(nick, recv_store);
     if (err == -1) {//need to also add connection information
-        send_error(ERROR_OP_NICK_TAKEN, &recv_store, "");
+        fprintf(stderr, "send error add player fail\n");
+        send_error(ERROR_OP_GEN, &recv_store, "");
         return -1;//if error return error dont respond to save memory???--------------
     } else if (err == -2) {
-        //
+        fprintf(stderr, "send error nick taken\n");
+        send_error(ERROR_OP_NICK_TAKEN, &recv_store, "");
         return -1;
     }
 

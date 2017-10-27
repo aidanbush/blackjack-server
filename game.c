@@ -105,6 +105,10 @@ void free_game() {
 
 int add_player(char *player_name, struct sockaddr_storage store) {
     //check if player with same nick already there
+    if (get_player(player_name) == -1) {
+        return -2;
+    }
+
     uint32_t money;//test -----------------------------------------
     if ((money = get_user_money(player_name)) == -1)
         money = rules.start;
