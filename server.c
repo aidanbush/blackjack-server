@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <string.h>
 
 /* system libraries */
 #include <sys/types.h>
@@ -79,26 +80,17 @@ static int init_server() {
     return sfd;
 }
 
-/*static int send_error(int error_opcode, destination, string of description) {
+static int send_error(uint8_t error_opcode, struct sockaddr_storage dest, char *msgstr) {
     uint8_t packet[ERROR_LEN];
     //memset 0
-    switch (error_opcode) {
-        case ERROR_OP_GEN:
-            break;
-        case ERROR_OP_MONEY:
-            break;
-        case ERROR_OP_SEATS:
-            break;
-        case ERROR_OP_NICK_TAKEN:
-            break;
-        case ERROR_OP_NICK_INV:
-            break;
-        case ERROR_OP_TIME:
-            break;
-        default:
-            break;
-    }
-}*/
+    memset(&packet, 0, ERROR_LEN);
+    packet[0] = OPCODE_ERROR;
+    packet[1] = error_opcode;
+    //copy str
+    strncpy((char *) &packet[2], msgstr, ERROR_MSG_LEN);
+
+    return 1;
+}
 
 /*int ack(packet) {
     //if acked msg exists
@@ -162,14 +154,20 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     }
 
     char *nick = get_connect_nick(packet);
+    //copy nick into array on stack with null terminator;
+    char new_nick[PLAYER_NAME_LEN + 1]; // TODO test---------------------
+    if (strncpy(new_nick, nick, PLAYER_NAME_LEN) == NULL) {
+        return -1;
+    }
+    new_nick[PLAYER_NAME_LEN] = '\0';
     // verify nickname
-    if (valid_nick(nick) == -1) {
+    if (valid_nick(new_nick) == -1) {
         //send error message
         return -1;
     }
 
     //add player
-    if (add_player(nick) == -1) {//need to also add connection information
+    if (add_player(nick, recv_store) == -1) {//need to also add connection information
         return -1;//if error return error dont respond to save memory???--------------
     }
 

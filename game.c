@@ -16,13 +16,14 @@
 #include <stdio.h>
 
 /* system libraries */
+#include <sys/socket.h>
 
 /* project includes */
 #include "game.h"
 
 #define START_USER_LIST_LEN 8
 
-player_s *init_player(char *nick, uint32_t start_money) {
+player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store) {
     player_s *player = malloc(sizeof(player_s));
     if (player == NULL)
         return NULL;
@@ -45,6 +46,7 @@ player_s *init_player(char *nick, uint32_t start_money) {
     player->money = start_money;
     player->bet = 0;
     player->active = 0;
+    player->sock = store;
 
     return player;
 }
@@ -101,7 +103,7 @@ void free_game() {
         game.num_players = 0;
 }
 
-int add_player(char *player_name) {
+int add_player(char *player_name, struct sockaddr_storage store) {
     // TODO: grab from userlist if they are there
     uint32_t money;//test -----------------------------------------
     if ((money = get_user_money(player_name)) == -1)
@@ -110,7 +112,7 @@ int add_player(char *player_name) {
     if (money < rules.min_bet)
         return -1;
 
-    player_s *player = init_player(player_name, money);
+    player_s *player = init_player(player_name, money, store);
 
     if (player == NULL)
         return -1;

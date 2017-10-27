@@ -40,6 +40,8 @@
 
 #define MAX_PACKET_LEN (STATUS_LEN)
 
+#define ERROR_MSG_LEN   (ERROR_LEN) - 2
+
 uint8_t *create_status_packet(uint8_t player);
 
 int validate_packet(uint8_t *packet_1, uint8_t *packet_2);

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 /* system libraries */
+#include <sys/socket.h>
 #include <arpa/inet.h>
 
 /* project includes */
@@ -23,14 +24,15 @@ game_s game;
 
 void add_7_players() {
     char name[12];
+    struct sockaddr_storage store;
     for (int i = 0; i < 6; i++) {
         // create name string
         sprintf(name, "new_t %d", i);
         // add player
-        add_player(name);
+        add_player(name, store);
     }
     // add 7th
-    add_player("new_t fail");
+    add_player("new_t fail", store);
 }
 
 int main() {
@@ -59,8 +61,9 @@ int main() {
     init_userlist();
 
     // add player
+    struct sockaddr_storage store;
     printf("creating player\n");
-    if (add_player("test1") < 1)
+    if (add_player("test1", store) < 1)
         fprintf(stderr, "\tERROR: in creating player\n");
 
     // test if player was added

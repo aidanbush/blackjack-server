@@ -9,6 +9,8 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <sys/socket.h>
+
 #include <stdint.h>
 
 #define MAX_PLAYERS 7
@@ -45,7 +47,7 @@ typedef struct player_s {
     uint32_t bet;
     uint8_t cards[MAX_NUM_CARDS];
     int active; // TODO switch to enum
-    //add players socket info
+    struct sockaddr_storage sock;//add players socket info
 } player_s;
 
 typedef struct deck_s {
@@ -76,7 +78,7 @@ extern userlist_s userlist;
 extern game_rules rules;
 extern game_s game;
 
-player_s *init_player(char *nick, uint32_t start_money);
+player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store);
 
 int delete_player(int i);
 
@@ -85,7 +87,7 @@ void init_game();
 void free_game();
 
 // player functions
-int add_player(char *player_name);
+int add_player(char *player_name, struct sockaddr_storage store);
 
 int64_t get_player_money(int i);
 
