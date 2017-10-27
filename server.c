@@ -27,6 +27,8 @@
 #define BACKLOG 5
 #define PORT "4420"
 
+int sfd;
+
 static int init_server() {
     struct addrinfo *res, hints = {
         .ai_family = AF_INET,
@@ -80,14 +82,20 @@ static int init_server() {
     return sfd;
 }
 
-static int send_error(uint8_t error_opcode, struct sockaddr_storage dest, char *msgstr) {
+static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char *msgstr) {
     uint8_t packet[ERROR_LEN];
     //memset 0
     memset(&packet, 0, ERROR_LEN);
     packet[0] = OPCODE_ERROR;
     packet[1] = error_opcode;
     //copy str
-    strncpy((char *) &packet[2], msgstr, ERROR_MSG_LEN);
+    if (msgstr != NULL)
+        strncpy((char *) &packet[2], msgstr, ERROR_MSG_LEN);
+
+    if (sendto(sfd, packet, ERROR_LEN, 0, (struct sockaddr *) dest, sizeof(dest)) != ERROR_LEN) {
+        fprintf(stderr, "ERROR SEND LEN\n");
+        return -1;
+    }
 
     return 1;
 }
@@ -139,8 +147,10 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage dest, char *
 }*/
 
 static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
+    fprintf(stderr, "GOT CONNECT\n");
     //if no space
     if (game.num_players >= game.max_players) {
+        send_error(ERROR_OP_SEATS, &recv_store, "");
         //send error message
         return -1;
     }
@@ -148,7 +158,8 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     // packet length incorrect
     if (len != CONNECT_LEN) {
         //send error message
-        //close connection???
+        fprintf(stderr, "SEND ERROR MSG\n");
+        send_error(ERROR_OP_GEN, &recv_store, "");
         //return error
         return -1;
     }
@@ -157,18 +168,25 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //copy nick into array on stack with null terminator;
     char new_nick[PLAYER_NAME_LEN + 1]; // TODO test---------------------
     if (strncpy(new_nick, nick, PLAYER_NAME_LEN) == NULL) {
+        send_error(ERROR_OP_GEN, &recv_store, "");
         return -1;
     }
     new_nick[PLAYER_NAME_LEN] = '\0';
     // verify nickname
     if (valid_nick(new_nick) == -1) {
         //send error message
+        send_error(ERROR_OP_NICK_INV, &recv_store, "");
         return -1;
     }
 
     //add player
-    if (add_player(nick, recv_store) == -1) {//need to also add connection information
+    int err = add_player(nick, recv_store);
+    if (err == -1) {//need to also add connection information
+        send_error(ERROR_OP_NICK_TAKEN, &recv_store, "");
         return -1;//if error return error dont respond to save memory???--------------
+    } else if (err == -2) {
+        //
+        return -1;
     }
 
     return 1;//success
@@ -177,7 +195,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
 void server() {
     uint8_t packet[MAX_PACKET_LEN];
 
-    int sfd = init_server();
+    sfd = init_server();
     if (sfd == -1) {
         fprintf(stderr, "unable to create server\n");
         return;
@@ -202,17 +220,17 @@ void server() {
 
         nrdy = select(sfd, &readfds, NULL, NULL, &timeout);
         if (nrdy == -1) {
-            printf("ERROR\n");
+            fprintf(stderr, "ERROR\n");
             continue;
         }
         //check error
         if (nrdy == 0) {
-            printf("TIMEOUT\n");
+            fprintf(stderr, "TIMEOUT\n");
             continue;
         }
 
-        printf("got msg\n");
-        recv_len = recvfrom(sfd, &packet, sizeof(packet), 0,
+        fprintf(stderr, "got msg\n");
+        recv_len = recvfrom(sfd + 1, &packet, sizeof(packet), 0,
                             (struct sockaddr*) &recv_store, &recv_addr_len);
 
         opcode = get_opcode(packet);
