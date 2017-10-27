@@ -54,6 +54,13 @@ typedef struct deck_s {
     int num_cards;
 } deck_s;
 
+typedef enum {
+    STATE_IDLE,
+    STATE_BET,
+    STATE_PLAY,
+    STATE_FINISH//may not need
+} game_state;
+
 typedef struct game_s {
     deck_s deck;
     uint8_t d_cards[MAX_NUM_CARDS];
@@ -62,6 +69,7 @@ typedef struct game_s {
     int num_players;
     int max_players;
     uint16_t seq_num;
+    game_state state;
 } game_s;
 
 extern userlist_s userlist;

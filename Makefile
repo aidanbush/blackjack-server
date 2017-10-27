@@ -14,15 +14,17 @@ all: blackjack
 
 test_game: test_game.o game.o packet.o
 
-test_game.o: test_game.c game.h packet.h
+test_game.o: test_game.c game.h packet.h server.h
 
-blackjack: blackjack.o game.o
+blackjack: blackjack.o game.o server.o
 
-blackjack.o: blackjack.c game.h
+blackjack.o: blackjack.c game.h server.h
 
 game.o: game.c game.h
 
 packet.o: packet.c packet.h game.h
+
+server.o: server.c server.h game.h
 
 clean:
 	$(RM) blackjack *.o test_game

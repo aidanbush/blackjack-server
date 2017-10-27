@@ -83,6 +83,7 @@ void init_game() {
     game.deck.cur_card = 0;
     game.deck.num_cards = 0;
     game.seq_num = 0;
+    game.state = STATE_IDLE;
 }
 
 void free_game() {

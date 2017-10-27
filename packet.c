@@ -11,6 +11,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <stdio.h>
+
 /* system libraries */
 #include <arpa/inet.h>
 
@@ -33,10 +35,13 @@
 #define VALIDATE_LEN    ((STATUS_LEN) - (VALIDATE_OFF))
 
 // offset defines
+#define OFF_OPCODE          0
+#define OFF_RESPONCE_CODE   1
 #define OFF_SEQ_NUM         5
 #define OFF_MIN_BET         7
 #define OFF_PLAYER          11
 #define OFF_D_CARDS         12
+// player offsets
 #define OFF_PLAYER_START    33
 #define OFF_PLAYER_BANK     12
 #define OFF_PLAYER_BET      16
@@ -59,10 +64,9 @@ static void packet_players(uint8_t *packet) {
         *((uint32_t *)(packet + p_off + (OFF_PLAYER_BET))) = game.players[i]->bet;// convert to proper endieness
         // add player cards
         player_s *player = game.players[i];
-        for (int j = 0; j < (MAX_NUM_CARDS) && player->cards[j] != 0; j++) {
+        for (int j = 0; j < (MAX_NUM_CARDS) && player->cards[j] != 0; j++)
             // dont have to convert since both are uint8_t
             packet[p_off + j] = player->cards[j];
-        }
     }
 }
 
@@ -76,10 +80,14 @@ static uint8_t *create_packet(uint8_t player, uint8_t opcode) {
     uint8_t *packet = malloc(sizeof(uint8_t) * STATUS_LEN);
     if (packet == NULL)
         return NULL;
-    memset(&packet, 0, STATUS_LEN);
-
+    uint8_t *tmp_packet = memset(packet, 0, STATUS_LEN);
+    if (tmp_packet == NULL) {
+        free(packet);
+        return NULL;
+    }
+    packet = tmp_packet;
     // opcode
-    packet[0] = opcode;
+    *packet = opcode;
 
     // Seqnum
     *((uint8_t *)(packet + OFF_SEQ_NUM)) = game.seq_num++;
@@ -105,4 +113,16 @@ uint8_t *create_status_packet(uint8_t player) {
 
 int validate_packet(uint8_t *packet_1, uint8_t *packet_2) {
     return memcmp(packet_1 + VALIDATE_OFF, packet_2 + VALIDATE_OFF, VALIDATE_LEN);
+}
+
+uint32_t get_bet(uint8_t *packet) {
+    if (packet == NULL)
+        return 0;
+    return (uint32_t) ntohl(*((uint32_t*) (packet + 1)));
+}
+
+uint8_t get_opcode(uint8_t *packet) {
+    if (packet == NULL)
+        return UINT8_MAX;
+    return *packet;
 }

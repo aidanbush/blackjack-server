@@ -16,9 +16,9 @@
 
 /* project includes */
 #include "game.h"
+#include "server.h"
 
-int v = 0;
-int port = 4420;
+int verbosity = 0;
 game_rules rules;
 game_s game;
 userlist_s userlist;
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     while ((c = getopt(argc, argv, "vhd:m:t:p:b:")) != -1) {
         switch (c) {
             case 'v':
-                v++;
+                verbosity++;
                 break;
             case 'h':
                 print_usage(argv[0]);
@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
     init_userlist();
 
     // call main loop
+    server();
 
     free_game();
     free_deck();

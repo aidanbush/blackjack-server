@@ -8,8 +8,10 @@
 
 /* standard libraries */
 #include <stdio.h>
+#include <stdlib.h>
 
 /* system libraries */
+#include <arpa/inet.h>
 
 /* project includes */
 #include "game.h"
@@ -32,6 +34,19 @@ void add_7_players() {
 }
 
 int main() {
+    printf("creating test packet and setting bet\n");
+    uint8_t *p;
+    p = create_status_packet(2);
+    if (p == NULL) {
+        fprintf(stderr, "\tfailed to create packet\n");
+    } else {
+        *((uint32_t *)(p+1)) = htonl(1000);// assign bet
+        if (get_bet(p) == 1000)
+            printf("\tcorrect bet assigned\n");
+        else
+            fprintf(stderr, "\tERROR: incorrect bet\n");
+        free(p);
+    }
     // call init functions
     printf("init globals\n");
     rules.decks = DEFAULT_DECKS;
