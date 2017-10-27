@@ -82,6 +82,26 @@ static int init_server() {
     return sfd;
 }
 
+//broadcast
+static int broadcast_state(int player) {
+    //create packet
+    uint8_t *packet = create_status_packet(player);
+    if (packet == NULL) {
+        fprintf(stderr, "packet create fail\n");
+        return -1;
+    }
+    //send packet
+    for (int i = 0; i < game.max_players; i++)
+        //if player in spot
+        if (game.players[i] != NULL)
+            //send msg
+            if (sendto(sfd, packet, STATUS_LEN, 0,
+                        (struct sockaddr *) &game.players[i]->sock,
+                        sizeof(&game.players[i]->sock)) != STATUS_LEN)
+                fprintf(stderr, "error in sending to player %d\n", i);
+    return 1;
+}
+
 static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char *msgstr) {
     uint8_t packet[ERROR_LEN];
     //memset 0
@@ -194,6 +214,13 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
         return -1;
     }
 
+    //if idle put in bet
+    if (game.state == STATE_IDLE) {
+        fprintf(stderr, "set state to BET\n");
+        game.state = STATE_BET;
+    }
+    //broadcast update
+    broadcast_state(0);
     return 1;//success
 }
 
@@ -230,7 +257,7 @@ void server() {
         }
         //check error
         if (nrdy == 0) {
-            fprintf(stderr, "TIMEOUT\n");
+            //fprintf(stderr, "TIMEOUT\n");
             continue;
         }
 
