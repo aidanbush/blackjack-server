@@ -112,8 +112,10 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     if (msgstr != NULL)
         strncpy((char *) &packet[2], msgstr, ERROR_MSG_LEN);
 
-    if (sendto(sfd, packet, ERROR_LEN, 0, (struct sockaddr *) dest, sizeof(dest)) != ERROR_LEN) {
-        fprintf(stderr, "ERROR SEND LEN\n");
+    int len = sendto(sfd, packet, ERROR_LEN, 0, (struct sockaddr *) dest, sizeof(dest));
+    if (len != ERROR_LEN) {
+        perror("sendto");
+        fprintf(stderr, "ERROR SEND LEN got:%d\n", len);
         return -1;
     }
 
