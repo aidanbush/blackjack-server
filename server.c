@@ -168,6 +168,52 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     //return success
 }*/
 
+static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
+    fprintf(stderr, "recieved stand\n");
+    //check length
+    if (len != STAND_LEN) {
+        fprintf(stderr, "send error STAND_LEN%d\n", len);
+        send_error(ERROR_OP_GEN, &recv_store, "");
+        return -1;
+    }
+
+    //check state
+    if (game.state != STATE_PLAY) {
+        fprintf(stderr, "incorrect state not play\n");
+        send_error(ERROR_OP_GEN, &recv_store, "");
+        return -1;
+    }
+
+    //get player
+    int p = get_player_sock(recv_store);
+    if (p == -1) {// check if player is in the game
+        fprintf(stderr, "stand from player not in game\n");
+        return -1;
+    }
+
+    //player not active ignore
+    if (game.players[p]->active != 1) {
+        fprintf(stderr, "stand from non active player\n");
+        return -1;
+    }
+    //check if asking for that players play TODO could remove??? may not want to
+    if (p != game.cur_player) {
+        fprintf(stderr, "stand from non current player\n");
+        return -1;
+    }
+
+    //set stand by updating current player
+    game.cur_player = next_player(game.cur_player);
+    //update state?
+    if (game.cur_player == -1) {
+        fprintf(stderr, "last players stand, state = STATE_FINAL\n");
+        game.state = STATE_FINISH;
+        //deal with finish state
+    }
+    return -1;
+}
+
+
 static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     fprintf(stderr, "recieved bet\n");
     //check packet length
@@ -217,8 +263,10 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 
     //set bet
     game.players[p]->bet = bet;
+
     //update current player
     game.cur_player = next_player(game.cur_player);
+
     //update gamestate
     if (game.cur_player == -1) {
         fprintf(stderr, "update state\n");
@@ -339,6 +387,7 @@ void server() {
                 op_bet(packet, recv_len, recv_store);
                 break;
             case OPCODE_STAND:
+                op_stand(packet, recv_len, recv_store);
                 break;
             case OPCODE_HIT:
                 break;
@@ -366,11 +415,8 @@ void server() {
             game.cur_player = next_player(-1);//deal with being kicked or not active
             //send request to player
             send_request();
-        } else if (game.cur_player == -1) {//start of new part
-            //update state
-            fprintf(stderr, "new state\n");
         } else {
-            send_request();// do i want this?
+            send_request();// do i want to move this to be timed
         }
         //check if need to kick player
     }

@@ -60,7 +60,7 @@ typedef enum {
     STATE_IDLE,
     STATE_BET,
     STATE_PLAY,
-    STATE_FINISH//may not need
+    STATE_FINISH
 } game_state;
 
 typedef struct game_s {
