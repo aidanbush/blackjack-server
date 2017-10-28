@@ -169,6 +169,7 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
 }*/
 
 static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
+    fprintf(stderr, "recieved bet\n");
     //check packet length
     if (len != BET_LEN) {
         fprintf(stderr, "send error BET_LEN%d\n", len);
@@ -178,6 +179,7 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 
     //check if in proper state
     if (game.state != STATE_BET) {
+        fprintf(stderr, "incorrect state not bet\n");
         //send error
         send_error(ERROR_OP_GEN, &recv_store, "");
         //if not return failure
@@ -213,6 +215,7 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
     game.cur_player = next_player(game.cur_player);
     //update gamestate
     if (game.cur_player == -1) {
+        fprintf(stderr, "update state\n");
         deal_cards();//deal cards
         //set state
         game.state = STATE_PLAY;
@@ -348,6 +351,7 @@ void server() {
 
         //if i need to start the round
         if (game.cur_player == -1 && game.state == STATE_IDLE) {
+            fprintf(stderr, "start round\n");
             //set state
             game.state = STATE_BET;
             //set player
