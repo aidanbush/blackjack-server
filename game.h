@@ -46,7 +46,7 @@ typedef struct player_s {
     uint32_t money;
     uint32_t bet;
     uint8_t cards[MAX_NUM_CARDS];
-    int active; // TODO switch to enum
+    int active; // TODO switch to enum -1 kicked, 0 not active, 1 active
     struct sockaddr_storage sock;//add players socket info
 } player_s;
 
@@ -72,6 +72,8 @@ typedef struct game_s {
     int max_players;
     uint16_t seq_num;
     game_state state;
+    int cur_player;
+    int waiting;
 } game_s;
 
 extern userlist_s userlist;
@@ -93,14 +95,20 @@ int64_t get_player_money(int i);
 
 int get_player(char *nick);
 
+int get_player_sock(struct sockaddr_storage store);
+
 void kick_player(player_s *p);
 
 int valid_nick(char *nick);
+
+int next_player(int cur);
 
 // deck functions
 int init_deck();
 
 void free_deck();
+
+void deal_cards();
 
 // userlist funcitons
 int init_userlist();

@@ -82,23 +82,31 @@ static int init_server() {
     return sfd;
 }
 
-//broadcast
-static int broadcast_state(int player) {
+int send_request() {
     //create packet
-    uint8_t *packet = create_status_packet(player);
-    if (packet == NULL) {
-        fprintf(stderr, "packet create fail\n");
-        return -1;
-    }
-    //send packet
-    for (int i = 0; i < game.max_players; i++)
-        //if player in spot
-        if (game.players[i] != NULL)
-            //send msg
+    uint8_t *packet = create_status_packet(game.cur_player);
+
+    // send packet to all players
+    for (int i = 0; i < game.max_players; i++) {
+        if (game.players[i] != NULL) {
             if (sendto(sfd, packet, STATUS_LEN, 0,
                         (struct sockaddr *) &game.players[i]->sock,
                         sizeof(game.players[i]->sock)) != STATUS_LEN)
-                fprintf(stderr, "error in sending to player %d\n", i);
+                fprintf(stderr, "could not send to %s\n", game.players[i]->nick);
+        }
+    }
+    return 1;
+}
+
+int send_state(struct sockaddr_storage *dest) {
+    //create packet
+    uint8_t *packet = create_status_packet(0);
+    if (packet == NULL) {
+        fprintf(stderr, "packet creation failed\n");
+        return -1;
+    }
+    //send packet
+    sendto(sfd, packet, STATUS_LEN, 0, (struct sockaddr *) dest, sizeof(*dest));
     return 1;
 }
 
@@ -112,7 +120,7 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     if (msgstr != NULL)
         strncpy((char *) &packet[2], msgstr, ERROR_MSG_LEN);
 
-    int len = sendto(sfd, packet, ERROR_LEN, 0, (struct sockaddr *) dest, sizeof(&dest));
+    int len = sendto(sfd, packet, ERROR_LEN, 0, (struct sockaddr *) dest, sizeof(*dest));
     if (len != ERROR_LEN) {
         perror("sendto");
         fprintf(stderr, "ERROR SEND LEN got:%d\n", len);
@@ -160,13 +168,58 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     //return success
 }*/
 
-/*int bet(packet) {
+static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
+    //check packet length
+    if (len != BET_LEN) {
+        fprintf(stderr, "send error BET_LEN%d\n", len);
+        send_error(ERROR_OP_GEN, &recv_store, "");
+        return -1;
+    }
+
     //check if in proper state
+    if (game.state != STATE_BET) {
+        //send error
+        send_error(ERROR_OP_GEN, &recv_store, "");
         //if not return failure
+        return -1;
+    }
+    //get player
+    int p = get_player_sock(recv_store);
+    if (p == -1) //player not in game
+        return -1;
+    //if player not active ignore
+    if (game.players[p]->active != 1)
+        return -1;
     //check if player already bet
+    if (game.players[p]->bet == 0) {
+        return -1;
+    }
+    //check if asking for that players bet
+    if (p != game.cur_player) {
+        return -1;
+    }
+    //get bet
+    uint32_t bet = get_bet(packet);
+    //check if bet is valid and they have enough money
+    if (bet < rules.min_bet || bet > game.players[p]->money) {
+        fprintf(stderr, "send error\n");
+        send_error(ERROR_OP_MONEY, &recv_store, "");
+        return -1;
+    }
+
     //set bet
-    //return success
-}*/
+    game.players[p]->bet = bet;
+    //update current player
+    game.cur_player = next_player(game.cur_player);
+    //update gamestate
+    if (game.cur_player == -1) {
+        deal_cards();//deal cards
+        //set state
+        game.state = STATE_PLAY;
+    }
+    //return success and update
+    return -1;
+}
 
 static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     fprintf(stderr, "GOT CONNECT\n");
@@ -216,13 +269,11 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
         return -1;
     }
 
-    //if idle put in bet
-    if (game.state == STATE_IDLE) {
-        fprintf(stderr, "set state to BET\n");
-        game.state = STATE_BET;
-    }
     //broadcast update
-    broadcast_state(0);
+    if (send_state(&recv_store) == -1) {
+        //removed recently added user
+        return -1;
+    }
     return 1;//success
 }
 
@@ -276,6 +327,7 @@ void server() {
                 op_connect(packet, recv_len, recv_store);
                 break;
             case OPCODE_BET:
+                op_bet(packet, recv_len, recv_store);
                 break;
             case OPCODE_STAND:
                 break;
@@ -290,9 +342,22 @@ void server() {
             default:
                 break;
         }
-        //if time up kick
+
+        //update timer
         //if time up forward messages (messages are only send here)
-        //check if state needs to be updated
+
+        //if i need to start the round
+        if (game.cur_player == -1 && game.state == STATE_IDLE) {
+            //set state
+            game.state = STATE_BET;
+            //set player
+            game.cur_player = next_player(-1);
+            //send request to player
+            send_request();
+        } else {
+            send_request();// do i want this?
+        }
+        //check if need to kick player
     }
 
     close(sfd);

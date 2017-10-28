@@ -87,6 +87,8 @@ void init_game() {
     game.deck.num_cards = 0;
     game.seq_num = 0;
     game.state = STATE_IDLE;
+    game.cur_player = -1;
+    game.waiting = 0;
 }
 
 void free_game() {
@@ -109,9 +111,12 @@ int add_player(char *player_name, struct sockaddr_storage store) {
         return -2;
     }
 
+    int64_t test_money;
     uint32_t money;//test -----------------------------------------
-    if ((money = get_user_money(player_name)) == -1)
+    if ((test_money = get_user_money(player_name)) == -1)
         money = rules.start;
+    else
+        money = test_money;
 
     if (money < rules.min_bet)
         return -1;
@@ -161,6 +166,35 @@ int valid_nick(char *nick) {
     return 1;
 }
 
+int sock_cmp(struct sockaddr_storage fst, struct sockaddr_storage snd) {
+    return memcmp(&fst, &snd, sizeof(struct sockaddr_storage));
+}
+
+int get_player_sock(struct sockaddr_storage store) {
+    //for all spots
+    for (int  i = 0; i < game.max_players; i++)
+        //if player exists
+        if (game.players[i] != NULL)
+            //if sock matches
+            if (sock_cmp(game.players[i]->sock, store) == 0)
+                return i;
+    return -1;
+}
+
+//return next player id
+int next_player(int cur) {// refactor to deal with game.cur_player
+    if (cur >= game.max_players)
+        return -1;
+
+    if (cur < -1) cur = -1;
+
+    for (int i = cur+1; i < game.max_players; i++) {
+        if (game.players[i] != NULL)
+            return i;
+    }
+    return -1;
+}
+
 // DECK FUNCTIONS
 
 static void shuffle_cards() {
@@ -197,6 +231,26 @@ void free_deck() {
     free(game.deck.cards);
     //set null
     game.deck.cards = NULL;
+}
+
+//grabs one card from the deck and returns it
+static int get_card() {
+    return game.deck.cards[game.deck.cur_card++];
+}
+
+//deals two cards to each player and the dealer
+void deal_cards() {
+    //dealer
+    game.d_cards[0] = get_card();
+    game.d_cards[1] = get_card();
+    //players
+    for (int i = 0; i < game.max_players; i++) {
+        //if player exists
+        if (game.players[i] != NULL) {
+            game.players[i]->cards[0] = get_card();//deal cards
+            game.players[i]->cards[1] = get_card();
+        }
+    }
 }
 
 // USERLIST FUNCTIONS
