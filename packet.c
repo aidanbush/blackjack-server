@@ -56,7 +56,7 @@ static void packet_players(uint8_t *packet) {
         player_s *player = game.players[i];
         for (int j = 0; j < (MAX_NUM_CARDS) && player->cards[j] != 0; j++)
             // dont have to convert since both are uint8_t
-            packet[p_off + j] = player->cards[j];
+            packet[p_off + (OFF_PLAYER_CARDS) + j] = player->cards[j];
     }
 }
 
