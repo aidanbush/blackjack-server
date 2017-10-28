@@ -190,7 +190,8 @@ int next_player(int cur) {// refactor to deal with game.cur_player
 
     for (int i = cur+1; i < game.max_players; i++) {
         if (game.players[i] != NULL)
-            return i;
+            if (game.players[i]->active == 1)//if active
+                return i;
     }
     return -1;
 }

@@ -363,9 +363,12 @@ void server() {
             //set state
             game.state = STATE_BET;
             //set player
-            game.cur_player = next_player(-1);
+            game.cur_player = next_player(-1);//deal with being kicked or not active
             //send request to player
             send_request();
+        } else if (game.cur_player == -1) {//start of new part
+            //update state
+            fprintf(stderr, "new state\n");
         } else {
             send_request();// do i want this?
         }
