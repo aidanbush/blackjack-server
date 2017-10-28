@@ -198,7 +198,7 @@ static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store
     }
     //check if asking for that players play TODO could remove??? may not want to
     if (p != game.cur_player) {
-        fprintf(stderr, "stand from non current player\n");
+        fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
         return -1;
     }
 
@@ -249,7 +249,7 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
     }
     //check if asking for that players bet TODO: may want to remove
     if (p != game.cur_player) {
-        fprintf(stderr, "bet from player not asking\n");
+        fprintf(stderr, "bet from player non current player:%d\n", game.cur_player);
         return -1;
     }
     //get bet
