@@ -251,6 +251,7 @@ void deal_cards() {
     //dealer
     game.d_cards[0] = get_card();
     game.d_cards[1] = get_card();
+    game.d_shown_cards = 1;
     //players
     for (int i = 0; i < game.max_players; i++) {
         //if player exists
