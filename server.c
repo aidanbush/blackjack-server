@@ -416,6 +416,7 @@ void server() {
             //send request to player
             send_request();
         } else if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
+            fprintf(stderr, "play round start, player:%d\n", game.cur_player);
             game.cur_player = next_player(game.cur_player);
         } else {
             send_request();// do i want to move this to be timed
