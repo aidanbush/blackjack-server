@@ -195,6 +195,14 @@ int next_player(int cur) {// refactor to deal with game.cur_player
     return -1;
 }
 
+void set_players_active() {
+    //for all players
+    for (int i = 0; i < game.max_players; i++)
+        //if not null
+        if (game.players[i] != NULL)
+            game.players[i]->active = 1;
+}
+
 // DECK FUNCTIONS
 
 static void shuffle_cards() {

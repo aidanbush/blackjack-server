@@ -103,6 +103,8 @@ int valid_nick(char *nick);
 
 int next_player(int cur);
 
+void set_players_active();
+
 // deck functions
 int init_deck();
 

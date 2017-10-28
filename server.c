@@ -357,6 +357,8 @@ void server() {
 
         //if i need to start the round
         if (game.cur_player == -1 && game.state == STATE_IDLE) {
+            //set players to be active
+            set_players_active();
             fprintf(stderr, "start round\n");
             //set state
             game.state = STATE_BET;
