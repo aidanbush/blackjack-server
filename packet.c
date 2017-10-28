@@ -49,9 +49,9 @@ static void packet_players(uint8_t *packet) {
         // add player name
         strncpy((char *)(packet + p_off), game.players[i]->nick, PLAYER_NAME_LEN);
         // add player bank
-        *((uint32_t *)(packet + p_off + (OFF_PLAYER_BANK))) = game.players[i]->money;// convert to proper endieness
+        *((uint32_t *)(packet + p_off + (OFF_PLAYER_BANK))) = htonl(game.players[i]->money);
         // add player bet
-        *((uint32_t *)(packet + p_off + (OFF_PLAYER_BET))) = game.players[i]->bet;// convert to proper endieness
+        *((uint32_t *)(packet + p_off + (OFF_PLAYER_BET))) = htonl(game.players[i]->bet);
         // add player cards
         player_s *player = game.players[i];
         for (int j = 0; j < (MAX_NUM_CARDS) && player->cards[j] != 0; j++)
@@ -80,7 +80,7 @@ static uint8_t *create_packet(uint8_t player, uint8_t opcode) {
     *packet = opcode;
 
     // Seqnum
-    *((uint8_t *)(packet + (OFF_SEQ_NUM))) = game.seq_num++;
+    *((uint16_t *)(packet + (OFF_SEQ_NUM))) = htons(game.seq_num++);
 
     // min_bet
     *((uint32_t *)(packet + (OFF_MIN_BET))) = htonl(rules.min_bet);
