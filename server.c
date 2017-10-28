@@ -210,7 +210,7 @@ static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store
         game.state = STATE_FINISH;
         //deal with finish state
     }
-    return -1;
+    return 1;
 }
 
 
