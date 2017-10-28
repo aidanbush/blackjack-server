@@ -415,6 +415,8 @@ void server() {
             game.cur_player = next_player(-1);//deal with being kicked or not active
             //send request to player
             send_request();
+        } else if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
+            game.cur_player = next_player(game.cur_player);
         } else {
             send_request();// do i want to move this to be timed
         }
