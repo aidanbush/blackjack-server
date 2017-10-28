@@ -187,17 +187,23 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
     }
     //get player
     int p = get_player_sock(recv_store);
-    if (p == -1) //player not in game
-        return -1;
-    //if player not active ignore
-    if (game.players[p]->active != 1)
-        return -1;
-    //check if player already bet
-    if (game.players[p]->bet == 0) {
+    if (p == -1) { //player not in game
+        fprintf(stderr, "bet from player not in game\n");
         return -1;
     }
-    //check if asking for that players bet
+    //if player not active ignore
+    if (game.players[p]->active != 1) {
+        fprintf(stderr, "bet from non active player\n");
+        return -1;
+    }
+    //check if player already bet
+    if (game.players[p]->bet != 0) {
+        fprintf(stderr, "bet from player who already bet\n");
+        return -1;
+    }
+    //check if asking for that players bet TODO: may want to remove
     if (p != game.cur_player) {
+        fprintf(stderr, "bet from player not asking\n");
         return -1;
     }
     //get bet
