@@ -466,6 +466,7 @@ void server() {
             send_request();
             send_request();
             //idle?
+            game.state = STATE_IDLE;
         }
         send_request();// do i want to move this to be timed
         //check if need to kick player
