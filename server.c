@@ -84,7 +84,7 @@ static int init_server() {
 
 int send_request() {
     //create packet
-    uint8_t *packet = create_status_packet(game.cur_player);
+    uint8_t *packet = create_status_packet(game.cur_player);//check that the corect player
 
     // send packet to all players
     for (int i = 0; i < game.max_players; i++) {
@@ -461,7 +461,11 @@ void server() {
         } else if (game.state == STATE_FINISH) {
             fprintf(stderr, "in final state\n");
             //make dealers moves
+            dealer_play();
             //update board
+            send_request();
+            send_request();
+            //idle?
         }
         send_request();// do i want to move this to be timed
         //check if need to kick player
