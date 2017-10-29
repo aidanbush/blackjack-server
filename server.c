@@ -214,8 +214,7 @@ static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
             game.state = STATE_FINISH;
         }
     }
-
-    return -1;
+    return 1;
 }
 
 static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
@@ -465,15 +464,13 @@ void server() {
             //set player
             game.cur_player = next_player(-1);//deal with being kicked or not active
             //send request to player
-            send_request();
         } else if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
             fprintf(stderr, "play round start, player:%d\n", game.cur_player);
             game.cur_player = next_player(game.cur_player);
         } else if (game.state == STATE_FINISH) {
             fprintf(stderr, "in final state\n");
-        } else {
-            send_request();// do i want to move this to be timed
         }
+        send_request();// do i want to move this to be timed
         //check if need to kick player
     }
 
