@@ -581,18 +581,23 @@ void round_end() {
             p_value = player_hand_value(i);
             if (p_value > 21)// if bust
                 p_value = -1;
-
+            fprintf(stderr, "results for player :%d\n", i);
             if (blackjack(i) == 1) {// if blackjack
                 if(d_black == 1) {// if both no one wins
+                    fprintf(stderr, "both blackjack\n");
                     player_tie(i);//return money
                 } else {
+                    fprintf(stderr, "player blackjack\n");
                     player_blackjack(i);//win 1.5x money
                 }
             } else if (p_value > d_value) {//else if above
+                fprintf(stderr, "player win\n");
                 player_win(i);//win money
             } else if (p_value == d_value) {//else if tie
+                fprintf(stderr, "tie\n");
                 player_tie(i);//return money
             } else {//else lose
+                fprintf(stderr, "player losses\n");
                 player_lost(i);//lose money
             }
         }
