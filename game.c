@@ -256,7 +256,7 @@ void deal_cards() {
     game.d_cards[0] = get_card();
     game.d_cards[1] = get_card();
     game.d_shown_cards = 1;
-    gmae.d_num_cards = 2
+    game.d_num_cards = 2;
     //players
     for (int i = 0; i < game.max_players; i++) {
         //if player exists
@@ -327,7 +327,7 @@ static int d_hand_value() {
     int h_ace = 0, value = 0;
     uint8_t card;
     for (int i = 0; i < game.d_num_cards && i < MAX_NUM_CARDS; i++) {
-        card = card_value(game.d_cardsp[i]);
+        card = card_value(game.d_cards[i]);
         if (card == 11)
             h_ace++;
         value += card;

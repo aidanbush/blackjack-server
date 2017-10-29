@@ -116,6 +116,8 @@ void deal_cards();
 
 int hit(int p);
 
+int dealer_play();
+
 // userlist funcitons
 int init_userlist();
 
