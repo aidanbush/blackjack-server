@@ -168,6 +168,56 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     //return success
 }*/
 
+static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
+    fprintf(stderr, "recived hit\n");
+    //check length
+    if (len != HIT_LEN) {
+        fprintf(stderr, "send error HIT_LEN%d\n", len);
+        send_error(ERROR_OP_GEN, &recv_store, "");
+        return -1;
+    }
+
+    //check state
+    if (game.state != STATE_PLAY) {
+        fprintf(stderr, "incorrect state not play\n");
+        send_error(ERROR_OP_GEN, &recv_store, "");
+        return -1;
+    }
+
+    //get player
+    int p = get_player_sock(recv_store);
+    if (p == -1) {// check if player is in the game
+        fprintf(stderr, "stand from player not in game\n");
+        return -1;
+    }
+
+    //if player not active ignore
+    if (game.players[p]->active != 1) {
+        fprintf(stderr, "stand from non active player\n");
+        return -1;
+    }
+
+    //check if asking for that player TODO could remove, probably shouldn't
+    if (p != game.cur_player) {
+        fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
+        return -1;
+    }
+
+    //make hit play
+    if (hit(p) == -1) {
+        fprintf(stderr, "player bust\n");
+        //if bust set next player
+        game.cur_player = next_player(game.cur_player);
+        //if cur_layer == -1 next state
+        if (game.cur_player == -1) {
+            fprintf(stderr, "last player busted, state = STATE_FINAL\n");
+            game.state = STATE_FINISH;
+        }
+    }
+
+    return -1;
+}
+
 static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     fprintf(stderr, "recieved stand\n");
     //check length
@@ -390,6 +440,7 @@ void server() {
                 op_stand(packet, recv_len, recv_store);
                 break;
             case OPCODE_HIT:
+                op_hit(packet, recv_len, recv_store);
                 break;
             case OPCODE_QUIT:
                 break;
@@ -418,6 +469,8 @@ void server() {
         } else if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
             fprintf(stderr, "play round start, player:%d\n", game.cur_player);
             game.cur_player = next_player(game.cur_player);
+        } else if (game.state == STATE_FINISH) {
+            fprintf(stderr, "in final state\n");
         } else {
             send_request();// do i want to move this to be timed
         }

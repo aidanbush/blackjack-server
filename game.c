@@ -47,6 +47,7 @@ player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage 
     player->bet = 0;
     player->active = 0;
     player->sock = store;
+    player->num_cards = 0;
 
     return player;
 }
@@ -259,8 +260,67 @@ void deal_cards() {
         if (game.players[i] != NULL) {
             game.players[i]->cards[0] = get_card();//deal cards
             game.players[i]->cards[1] = get_card();
+            game.players[i]->num_cards = 2;
         }
     }
+}
+
+static uint8_t card_value(uint8_t card) {
+    uint8_t value = ((card - 1) % 13) + 1;
+    if (value > 10)//if face card
+        value = 10;
+    if (value == 1)//if ace
+        value = 11;
+    return value;
+}
+
+//soft 17
+//static int dealer_hand_value
+
+//-1 if player does not exist
+static int player_hand_value(int p) {
+    if (game.players[p] == NULL) {
+        return -1;
+    }
+    int h_ace = 0, value = 0;
+    uint8_t card;
+    for (int i = 0; i < MAX_NUM_CARDS || game.players[p]->cards[i] == 0; i++) {
+        card = card_value(game.players[p]->cards[i]);
+        if (card == 11)//if ace
+            h_ace += 1;
+        value += card;
+        //check if too high
+        if (value > 21) {
+            if (h_ace > 1){
+                h_ace--;
+                value -= 10;
+            }
+        }
+    }
+    return value;
+}
+
+//return -1 if bust, 1 otherwise
+//if the player is already busted returns -1
+int hit(int p) {
+    //if player exists
+    if (game.players[p] == NULL) {
+        return -1;
+    }
+    //check players hand value
+    if (player_hand_value(p) > 21) {
+        return -1;
+    }
+
+    //get card and give to player
+    uint8_t card = get_card();
+    //add card to hand
+    game.players[p]->cards[game.players[p]->num_cards++] = card;
+    //calculate value
+    if (player_hand_value(p) > 21) {
+        return -1;
+    }
+    return 1;
 }
 
 // USERLIST FUNCTIONS
