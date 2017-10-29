@@ -462,13 +462,13 @@ void server() {
             fprintf(stderr, "in final state\n");
             //make dealers moves
             dealer_play();
-            //update board
-            send_request();
-            send_request();
             //idle?
             game.state = STATE_IDLE;
             //update money
             round_end();
+            //update board
+            send_request();
+            send_request();
             //reset game data
         }
         if (game.state != STATE_IDLE) {
