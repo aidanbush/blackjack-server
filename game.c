@@ -582,7 +582,7 @@ void round_end() {
             if (p_value > 21)// if bust
                 p_value = -1;
 
-            if (blackjack(i)) {// if blackjack
+            if (blackjack(i) == 1) {// if blackjack
                 if(d_black == 1) {// if both no one wins
                     player_tie(i);//return money
                 } else {
