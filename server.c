@@ -467,8 +467,13 @@ void server() {
             send_request();
             //idle?
             game.state = STATE_IDLE;
+            //update money
+            round_end();
+            //reset game data
         }
-        send_request();// do i want to move this to be timed
+        if (game.state != STATE_IDLE) {
+            send_request();// do i want to move this to be timed
+        }
         //check if need to kick player
     }
 

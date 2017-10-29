@@ -82,8 +82,6 @@ extern userlist_s userlist;
 extern game_rules rules;
 extern game_s game;
 
-player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store);
-
 int delete_player(int i);
 
 void init_game();
@@ -128,5 +126,9 @@ uint64_t get_user_money(char *nick);
 int get_user(char *nick);
 
 int add_player_to_list(char *nick, uint32_t money);
+
+//round end
+
+void round_end();
 
 #endif /* GAME_H */

@@ -24,7 +24,7 @@
 #define START_USER_LIST_LEN 8
 
 //should be static
-player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store) {
+static player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store) {
     player_s *player = malloc(sizeof(player_s));
     if (player == NULL)
         return NULL;
@@ -268,6 +268,27 @@ void deal_cards() {
     }
 }
 
+//retunr 1 if the given player has a blackjack
+static int blackjack(int p) {
+    if (game.players[p] == NULL) {
+        return -1;
+    }
+    //if player was not dealt
+    if (game.players[p]->cards[0] == 0 || game.players[p] == 0)
+        return -1;
+
+    //if the player has blackjack
+    if ((game.players[p]->cards[0] + game.players[p]->cards[1]) == 21)
+        return 1;
+    return -1;
+}
+
+static int d_blackjack() {
+    if ((game.d_cards[0] + game.d_cards[1]) == 21)
+        return 1;
+    return -1;
+}
+
 static uint8_t card_value(uint8_t card) {
     uint8_t value = ((card - 1) % 13) + 1;
     if (value > 10)//if face card
@@ -499,4 +520,86 @@ int add_player_to_list(char *nick, uint32_t money) {
         return -1;
     }
     return i;
+}
+
+// ROUND COMPLETION
+
+static void player_blackjack(int p) {
+    //if player does not exist
+    if (game.players[p] == NULL)
+        return;
+    int64_t tmp_money = game.players[p]->bet * 3 / 2;//bet *1.5
+    if (tmp_money + game.players[p]->money > UINT32_MAX)// if overflow
+        game.players[p]->money = UINT32_MAX;
+    else
+        game.players[p]->money += tmp_money;//may need to cast
+    game.players[p]->bet = 0;// reset bet
+}
+
+static void player_win(int p) {
+    //if player does not exist
+    if (game.players[p] == NULL)
+        return;
+    int64_t tmp_money = game.players[p]->bet;
+    if (tmp_money + game.players[p]->money > UINT32_MAX)// if overflow
+        game.players[p]->money = UINT32_MAX;
+    else
+        game.players[p]->money += tmp_money;//may need to cast
+    game.players[p]->bet = 0;// reset bet
+}
+
+static void player_tie(int p) {
+    game.players[p]->bet = 0;//reset bet
+}
+
+//lose bet
+static void player_lost(int p) {
+    //if player does not exist
+    if (game.players[p] == NULL)
+        return;
+    int64_t tmp_money = game.players[p]->bet;
+    if (game.players[p]->money - game.players[p]->bet < 0)//check if they have enough money
+        game.players[p]->money = 0;
+    else
+        game.players[p]->money -= tmp_money;
+    game.players[p]->bet = 0;// reset bet
+}
+
+//calculates who won and how much they win
+void round_end() {
+    //get dealers hand
+    int d_value = d_hand_value();
+    if (d_value > 21)// if bust
+        d_value = -1;
+
+    int d_black = d_blackjack();
+    int p_value;
+    //for every player
+    for (int i = 0; i < game.max_players; i++) {
+        //if not null
+        if (game.players[i] != NULL) {
+            p_value = player_hand_value(i);
+            if (p_value > 21)// if bust
+                p_value = -1;
+
+            if (blackjack(i)) {// if blackjack
+                if(d_black == 1) {// if both no one wins
+                    player_tie(i);//return money
+                } else {
+                    player_blackjack(i);//win 1.5x money
+                }
+            } else if (p_value > d_value) {//else if above
+                player_win(i);//win money
+            } else if (p_value == d_value) {//else if tie
+                player_tie(i);//return money
+            } else {//else lose
+                player_lost(i);//lose money
+            }
+        }
+    }
+    //reset deck if needed ---TODO may want to move into separate function
+    if (game.deck.cur_card > (game.deck.num_cards / 2)) {
+        shuffle_cards();
+        game.deck.cur_card = 0;
+    }
 }
