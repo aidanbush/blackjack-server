@@ -291,7 +291,7 @@ static int player_hand_value(int p) {
         value += card;
         //check if too high
         if (value > 21) {
-            if (h_ace > 1){
+            if (h_ace > 0){
                 h_ace--;
                 value -= 10;
             }
@@ -333,7 +333,7 @@ static int d_hand_value() {
         value += card;
 
         if (value > 21 || value == 17) {//too high or soft 17
-            if (h_ace > 1) {
+            if (h_ace > 0) {
                 h_ace--;
                 value -= 10;
             }
