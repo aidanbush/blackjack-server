@@ -23,6 +23,7 @@
 
 #define START_USER_LIST_LEN 8
 
+//should be static
 player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store) {
     player_s *player = malloc(sizeof(player_s));
     if (player == NULL)
@@ -106,6 +107,7 @@ void free_game() {
         game.num_players = 0;
 }
 
+//returns index if added otherwise -2 if nick already taken, -1 if there was an error
 int add_player(char *player_name, struct sockaddr_storage store) {
     //check if player with same nick already there
     if (get_player(player_name) != -1) {
@@ -130,7 +132,7 @@ int add_player(char *player_name, struct sockaddr_storage store) {
     for (int i = 0; i < game.max_players; i++) {
         if (game.players[i] == NULL) {
             game.players[i] = player;
-            return 1;
+            return i;
         }
     }
 

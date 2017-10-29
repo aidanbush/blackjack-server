@@ -364,20 +364,29 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     }
 
     //add player
-    int err = add_player(nick, recv_store);
-    if (err == -1) {//need to also add connection information
+    int pos = add_player(nick, recv_store);
+    if (pos == -1) {//need to also add connection information
         fprintf(stderr, "send error add player fail\n");
         send_error(ERROR_OP_GEN, &recv_store, "");
         return -1;//if error return error dont respond to save memory???--------------
-    } else if (err == -2) {
+    } else if (pos == -2) {
         fprintf(stderr, "send error nick taken\n");
         send_error(ERROR_OP_NICK_TAKEN, &recv_store, "");
         return -1;
     }
 
+    //if in idle state set them to be active
+    if (game.state == STATE_IDLE) {//currently redundant
+        game.players[pos]->active = 1;
+    }
+    //if in bet state and they are after the current player set to active
+    else if (game.state == STATE_BET && game.cur_player < pos) {
+        game.players[pos]->active = 1;
+    }
+
     //broadcast update
     if (send_state(&recv_store) == -1) {
-        //removed recently added user
+        //TODO removed recently added user ----------------------------------
         return -1;
     }
     return 1;//success
@@ -454,7 +463,7 @@ void server() {
         //update timer
         //if time up forward messages (messages are only send here)
 
-        //if i need to start the round
+        //if i need to start the round from idle
         if (game.cur_player == -1 && game.state == STATE_IDLE) {
             //set players to be active
             set_players_active();
