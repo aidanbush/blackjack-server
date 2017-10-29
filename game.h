@@ -13,13 +13,13 @@
 
 #include <stdint.h>
 
-#define MAX_PLAYERS 7
+#define MAX_PLAYERS     7
 
-#define MAX_NUM_CARDS 21
-#define DEFAULT_BET 1
-#define DEFAULT_START 100
-#define DEFAULT_TIME 10
-#define DEFAULT_DECKS 2
+#define MAX_NUM_CARDS   21
+#define DEFAULT_BET     1
+#define DEFAULT_START   100
+#define DEFAULT_TIME    10
+#define DEFAULT_DECKS   2
 
 #define PLAYER_NAME_LEN 12
 
@@ -68,6 +68,7 @@ typedef struct game_s {
     deck_s deck;
     uint8_t d_cards[MAX_NUM_CARDS];
     int d_shown_cards;
+    int d_num_cards; // todo implement
     player_s *players[MAX_PLAYERS];
     int num_players;
     int max_players;

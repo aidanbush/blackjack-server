@@ -142,24 +142,6 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     //set player kicked
 }*/
 
-/*int hit(packet) {
-    //check if in proper state -- may want to move into main loop
-        //if not return failure
-    //check if current player is active player
-    //add card
-    //check if bust
-        //return bust
-    //return not bust
-}*/
-
-/*int stand(packet) {
-    //check if in proper state
-        //if not return failure
-    //check if current player is active player
-        //if not return error
-    //return stand
-}*/
-
 /*int msg(packet) {
     //check if in proper state
         //if not return failure
@@ -478,6 +460,8 @@ void server() {
             game.cur_player = next_player(game.cur_player);
         } else if (game.state == STATE_FINISH) {
             fprintf(stderr, "in final state\n");
+            //make dealers moves
+            //update board
         }
         send_request();// do i want to move this to be timed
         //check if need to kick player

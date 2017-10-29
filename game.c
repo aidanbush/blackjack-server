@@ -256,6 +256,7 @@ void deal_cards() {
     game.d_cards[0] = get_card();
     game.d_cards[1] = get_card();
     game.d_shown_cards = 1;
+    gmae.d_num_cards = 2
     //players
     for (int i = 0; i < game.max_players; i++) {
         //if player exists
@@ -275,9 +276,6 @@ static uint8_t card_value(uint8_t card) {
         value = 11;
     return value;
 }
-
-//soft 17
-//static int dealer_hand_value
 
 //-1 if player does not exist
 static int player_hand_value(int p) {
@@ -319,9 +317,49 @@ int hit(int p) {
     //add card to hand
     game.players[p]->cards[game.players[p]->num_cards++] = card;
     //calculate value
-    if (player_hand_value(p) > 21) {
+    if (player_hand_value(p) > 21)
         return -1;
+    return 1;
+}
+
+//soft 17
+static int d_hand_value() {
+    int h_ace = 0, value = 0;
+    uint8_t card;
+    for (int i = 0; i < game.d_num_cards && i < MAX_NUM_CARDS; i++) {
+        card = card_value(game.d_cardsp[i]);
+        if (card == 11)
+            h_ace++;
+        value += card;
+
+        if (value > 21 || value == 17) {//too high or soft 17
+            if (h_ace > 1) {
+                h_ace--;
+                value -= 10;
+            }
+        }
     }
+    return value;
+}
+
+//soft 17
+int dealer_play() {
+    int value = 0;
+    //get current value
+    value = d_hand_value();
+
+    //while low value < 17
+    while (value < 17) {
+        // get new card and add to deck
+        game.d_cards[game.d_num_cards++] = get_card();
+        //update value
+        value = d_hand_value();
+    }
+    //set shown cards
+    game.d_shown_cards = MAX_NUM_CARDS;
+    //return -1 for bust, or card value
+    if (value > 21)
+        return -1;
     return 1;
 }
 
