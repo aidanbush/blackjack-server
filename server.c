@@ -449,6 +449,7 @@ static void print_player(int p) {
 }
 
 static void print_state() {
+    fprintf(stderr, "\n");
     //print state
     switch (game.state) {
         case STATE_IDLE:
@@ -467,6 +468,8 @@ static void print_state() {
             fprintf(stdout, "ERROR\n");
             break;
     }
+
+    fprintf(stderr, "current player: %d\n", game.cur_player);
 
     //print dealer
     fprintf(stdout, "dealer\n hand:");
@@ -573,6 +576,7 @@ void server() {
             fprintf(stderr, "round reset\n");
         }
         if (game.state != STATE_IDLE) {
+            fprintf(stderr, "send_request\n");
             send_request();// do i want to move this to be timed
         }
         //if i need to start the round from idle
