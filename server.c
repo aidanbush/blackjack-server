@@ -139,9 +139,23 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
         //return error
 }*/
 
-/*int quit(packet) {
-    //set player kicked
-}*/
+//need to deal with when im in the bet state and have only the one client
+static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
+    //if incorrect length
+
+    //get player and check they exist
+    int p = get_player_sock(recv_store);
+    if (p == -1) {// check if player is in the game
+        fprintf(stderr, "stand from player not in game\n");
+        return -1;
+    }
+
+    //set them to kicked
+    kick_player(p);
+    //check state
+    //deal with messages
+    return 1;
+}
 
 /*int msg(packet) {
     //check if in proper state
@@ -408,7 +422,7 @@ void server() {
         }
         //check error
         if (nrdy == 0) {
-            fprintf(stderr, "TIMEOUT\n");
+            //fprintf(stderr, "TIMEOUT\n");
             continue;
         }
 
@@ -434,6 +448,7 @@ void server() {
                 op_hit(packet, recv_len, recv_store);
                 break;
             case OPCODE_QUIT:
+                op_quit(packet, recv_len, recv_store);
                 break;
             case OPCODE_MESSAGE:
                 break;
@@ -446,17 +461,7 @@ void server() {
         //update timer
         //if time up forward messages (messages are only send here)
 
-        //if i need to start the round from idle
-        if (game.cur_player == -1 && game.state == STATE_IDLE) {
-            //set players to be active
-            set_players_active();
-            fprintf(stderr, "start round\n");
-            //set state
-            game.state = STATE_BET;
-            //set player
-            game.cur_player = next_player(-1);//deal with being kicked or not active
-            //send request to player
-        } else if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
+        if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
             fprintf(stderr, "play round start, player:%d\n", game.cur_player);
             game.cur_player = next_player(game.cur_player);
         } else if (game.state == STATE_FINISH) {
@@ -477,6 +482,17 @@ void server() {
         }
         if (game.state != STATE_IDLE) {
             send_request();// do i want to move this to be timed
+        }
+        //if i need to start the round from idle
+        if (game.cur_player == -1 && game.state == STATE_IDLE) {
+            //set players to be active
+            set_players_active();
+            fprintf(stderr, "start round\n");
+            //set state
+            game.state = STATE_BET;
+            //set player
+            game.cur_player = next_player(-1);//deal with being kicked or not active
+            //send request to player
         }
         //check if need to kick player
     }

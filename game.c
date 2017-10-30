@@ -157,6 +157,8 @@ int get_player(char *nick) {
 }
 
 void kick_player(player_s *p) {
+    if (game.players[p] == NULL)
+        return;
     p->active = -1;
 }
 
