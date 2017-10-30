@@ -166,6 +166,8 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
                 game.state = STATE_IDLE;
                 fprintf(stderr, "no players\n");
             }
+        } else if (game.cur_player == -1) {
+            game.state = STATE_IDLE;
         }
     }
     //deal with messages
@@ -390,6 +392,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //if in idle state set them to be active
     if (game.state == STATE_IDLE) {//currently redundant
         game.players[pos]->active = 1;
+        //set curent player to that player?------------------------------------------------------------------------------
     }
     //if in bet state and they are after the current player set to active
     else if (game.state == STATE_BET && game.cur_player < pos) {
@@ -397,10 +400,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     }
 
     //broadcast update
-    if (send_state(&recv_store) == -1) {
-        //TODO removed recently added user ----------------------------------
-        return -1;
-    }
+    send_state(&recv_store);
     return 1;//success
 }
 
