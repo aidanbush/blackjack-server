@@ -370,7 +370,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     }
     new_nick[PLAYER_NAME_LEN] = '\0';
     // verify nickname
-    if (valid_nick(new_nick) == -1) {
+    if (valid_nick(new_nick) == -1) {;
         //send error message
         fprintf(stderr, "send error invalid nick\n");
         send_error(ERROR_OP_NICK_INV, &recv_store, "");
@@ -392,7 +392,9 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //if in idle state set them to be active
     if (game.state == STATE_IDLE) {//currently redundant
         game.players[pos]->active = 1;
-        //set curent player to that player?------------------------------------------------------------------------------
+        if (game.cur_player == -1) {
+            game.cur_player = next_player(game.cur_player);
+        }
     }
     //if in bet state and they are after the current player set to active
     else if (game.state == STATE_BET && game.cur_player < pos) {
