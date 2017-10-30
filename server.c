@@ -163,6 +163,7 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
             fprintf(stderr, "updated current player now:%d\n", game.cur_player);
             //if cur_player == -1 and there are no active players got to idle state
             if (game.cur_player == -1 && num_players() == 0) {
+                game.state = STATE_IDLE;
                 fprintf(stderr, "no players\n");
             }
         }
