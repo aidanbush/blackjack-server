@@ -84,7 +84,7 @@ static int init_server() {
 
 int send_request() {
     //create packet
-    uint8_t *packet = create_status_packet(game.cur_player);//check that the corect player
+    uint8_t *packet = create_status_packet(game.cur_player + 1);//check that the corect player
 
     // send packet to all players
     for (int i = 0; i < game.max_players; i++) {
@@ -399,7 +399,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     }
 
     //set current player if no current player is set
-    if (game.cur_player == -1) {
+    if (game.cur_player == -1) {// not working---------------------------------------
         game.cur_player = next_player(game.cur_player);
     }
 
