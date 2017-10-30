@@ -398,11 +398,6 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
         game.players[pos]->active = 1;
     }
 
-    //set current player if no current player is set
-    if (game.cur_player == -1) {// not working---------------------------------------
-        game.cur_player = next_player(game.cur_player);
-    }
-
     //broadcast update
     send_state(&recv_store);
     return 1;//success
