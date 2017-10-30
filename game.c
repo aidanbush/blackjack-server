@@ -156,10 +156,10 @@ int get_player(char *nick) {
     return -1;
 }
 
-void kick_player(player_s *p) {
+void kick_player(int p) {
     if (game.players[p] == NULL)
         return;
-    p->active = -1;
+    game.players[p]->active = -1;
 }
 
 int valid_nick(char *nick) {
