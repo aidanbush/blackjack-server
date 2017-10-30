@@ -392,13 +392,15 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //if in idle state set them to be active
     if (game.state == STATE_IDLE) {//currently redundant
         game.players[pos]->active = 1;
-        if (game.cur_player == -1) {
-            game.cur_player = next_player(game.cur_player);
-        }
     }
     //if in bet state and they are after the current player set to active
     else if (game.state == STATE_BET && game.cur_player < pos) {
         game.players[pos]->active = 1;
+    }
+
+    //set current player if no current player is set
+    if (game.cur_player == -1) {
+        game.cur_player = next_player(game.cur_player);
     }
 
     //broadcast update
