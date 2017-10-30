@@ -152,7 +152,10 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
 
     //set them to kicked
     kick_player(p);
-    //check state
+    //if state is idle or beting, and they have not bet delete them
+    if (game.state == STATE_IDLE || (game.state == STATE_BET && game.players[p]->bet == 0)){
+        delete_player(p);//delete them
+    }
     //deal with messages
     return 1;
 }
