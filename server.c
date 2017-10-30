@@ -467,13 +467,13 @@ void server() {
             game.state = STATE_IDLE;
             //update money
             round_end();
-            //update board
+            //send updated board
             send_request();
             send_request();
-            //kick players
+
             remove_kicked();
-            //reset game data
             reset_game();
+            fprintf(stderr, "round reset\n");
         }
         if (game.state != STATE_IDLE) {
             send_request();// do i want to move this to be timed
