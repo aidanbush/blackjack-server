@@ -186,6 +186,14 @@ int get_player_sock(struct sockaddr_storage store) {
     return -1;
 }
 
+int num_players() {
+    int c = 0;
+    for (int i = 0; i < game.max_players; i++)
+        if (game.players[i] != NULL)
+            c++;
+    return c;
+}
+
 //return next player id
 int next_player(int cur) {// refactor to deal with game.cur_player
     if (cur >= game.max_players)

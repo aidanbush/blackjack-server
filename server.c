@@ -158,8 +158,14 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
     if (game.state == STATE_IDLE || (game.state == STATE_BET && game.players[p]->bet == 0)){
         delete_player(p);//delete them
         // deal with current player
-        if (p == game.cur_player)
+        if (p == game.cur_player) {
             game.cur_player = next_player(game.cur_player);
+            fprintf(stderr, "updated current player now:%d\n", game.cur_player);
+            //if cur_player == -1 and there are no active players got to idle state
+            if (game.cur_player == -1 && num_players() == 0) {
+                fprintf(stderr, "no players\n");
+            }
+        }
     }
     //deal with messages
     return 1;

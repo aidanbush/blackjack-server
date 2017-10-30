@@ -97,6 +97,8 @@ int get_player(char *nick);
 
 int get_player_sock(struct sockaddr_storage store);
 
+int num_players();
+
 void kick_player(int p);
 
 int valid_nick(char *nick);
