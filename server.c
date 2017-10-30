@@ -436,7 +436,7 @@ static void print_player(int p) {
     player_s *player = game.players[p];
     if (player == NULL) {
         fprintf(stdout, "player[%d] bnk: %d bet: %d active: %d\n", p, 0, 0, 0);
-        fprintf(stdout, " hand: none");
+        fprintf(stdout, " hand: none\n");
     } else {
         fprintf(stdout, "player[%d] bnk: %d bet: %d active: %d\n", p, player->money, player->bet, player->active);
         fprintf(stdout, " hand:");
