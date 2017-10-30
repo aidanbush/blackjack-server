@@ -408,7 +408,7 @@ void server() {
         }
         //check error
         if (nrdy == 0) {
-            //fprintf(stderr, "TIMEOUT\n");
+            fprintf(stderr, "TIMEOUT\n");
             continue;
         }
 

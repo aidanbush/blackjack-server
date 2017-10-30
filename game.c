@@ -577,7 +577,7 @@ void round_end() {
     //for every player
     for (int i = 0; i < game.max_players; i++) {
         //if not null
-        if (game.players[i] != NULL) {
+        if (game.players[i] != NULL && game.players[i]->active != 0) {
             p_value = player_hand_value(i);
             if (p_value > 21)// if bust
                 p_value = -1;
