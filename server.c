@@ -141,6 +141,7 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
 
 //need to deal with when im in the bet state and have only the one client
 static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
+    fprintf(stderr, "recieved quit\n");
     //if incorrect length
 
     //get player and check they exist
@@ -152,6 +153,7 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
 
     //set them to kicked
     kick_player(p);
+    fprintf(stderr, "kicked player:%d\n", p);
     //if state is idle or beting, and they have not bet delete them
     if (game.state == STATE_IDLE || (game.state == STATE_BET && game.players[p]->bet == 0)){
         delete_player(p);//delete them
