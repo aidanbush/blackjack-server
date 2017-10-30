@@ -107,6 +107,7 @@ int send_state(struct sockaddr_storage *dest) {
     }
     //send packet
     sendto(sfd, packet, STATUS_LEN, 0, (struct sockaddr *) dest, sizeof(*dest));
+    free(packet);
     return 1;
 }
 
@@ -469,7 +470,10 @@ void server() {
             //update board
             send_request();
             send_request();
+            //kick players
+            remove_kicked();
             //reset game data
+            reset_game();
         }
         if (game.state != STATE_IDLE) {
             send_request();// do i want to move this to be timed

@@ -608,3 +608,66 @@ void round_end() {
         game.deck.cur_card = 0;
     }
 }
+
+void remove_kicked() {
+    //for all players
+    for (int i = 0; i < game.max_players; i++)
+        //if player != NULL
+        if (game.players[i] != NULL)
+            //if kicked, delete
+            if (game.players[i]->active == -1)
+                //delete player
+                delete_player(i);
+}
+
+static void reset_bets() {
+    //for all players
+    for (int i = 0; i < game.max_players; i++)
+        //if player != NULL
+        if (game.players[i] != NULL)
+            //set bet to 0
+            game.players[i]->bet = 0;
+}
+
+static void reset_player(int p) {
+    if (game.players[p] == NULL)
+        return;
+    //zero out deck
+    for (int i = 0; i < MAX_NUM_CARDS; i++)//may only have to set num cards to 0
+        game.players[p]->cards[i] = 0;
+    //num_cards == 0
+    game.players[p]->num_cards = 0;
+}
+
+static void reset_dealer() {
+    //for cards
+    for (int i = 0; i < MAX_NUM_CARDS; i++)
+        game.d_cards[i] = 0;
+    //card count
+    game.d_num_cards = 0;
+    //shown cards
+    game.d_shown_cards = 0;
+}
+
+//may be redundant but still a good check
+static void set_num_players() {
+    int c = 0;
+    for (int i = 0; i < game.max_players; i++)
+        if (game.players[i] != NULL)
+            c++;
+    game.num_players = c;
+}
+
+void reset_game() {
+    //reset players cards and num cards
+    for (int i = 0; i < game.max_players; i++)
+        if (game.players[i] != NULL)
+            reset_player(i);
+    //reset bets
+    reset_bets();
+    //reset dealers cards and num cards
+    reset_dealer();
+    //curent palyer
+    game.cur_player = -1;
+    set_num_players();
+}

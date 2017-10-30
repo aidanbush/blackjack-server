@@ -75,7 +75,7 @@ typedef struct game_s {
     uint16_t seq_num;
     game_state state;
     int cur_player;
-    int waiting;
+    int waiting;// remove
 } game_s;
 
 extern userlist_s userlist;
@@ -130,5 +130,9 @@ int add_player_to_list(char *nick, uint32_t money);
 //round end
 
 void round_end();
+
+void remove_kicked();
+
+void reset_game();
 
 #endif /* GAME_H */
