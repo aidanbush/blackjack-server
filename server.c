@@ -408,6 +408,79 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     return 1;//success
 }
 
+static void print_card(uint8_t card) {
+    int v = ((card - 1) % 13) + 1;
+    switch (v) {
+        case 13:
+            fprintf(stdout, " K");
+            break;
+        case 12:
+            fprintf(stdout, " Q");
+            break;
+        case 11:
+            fprintf(stdout, " J");
+            break;
+        case 10:
+            fprintf(stdout, " T");
+            break;
+        case 1:
+            fprintf(stdout, " A");
+            break;
+        default:
+            fprintf(stdout, " %d", v);
+            break;
+    }
+}
+
+static void print_player(int p) {
+    player_s *player = game.players[p];
+    if (player == NULL) {
+        fprintf(stdout, "player[%d] bnk: %d bet: %d active: %d\n", p, 0, 0, 0);
+        fprintf(stdout, " hand: none");
+    } else {
+        fprintf(stdout, "player[%d] bnk: %d bet: %d active: %d\n", p, player->money, player->bet, player->active);
+        fprintf(stdout, " hand:");
+        for (int i = 0; i < player->num_cards; i++) {
+            uint8_t card = player->cards[i];
+            print_card(card);
+        }
+        fprintf(stdout, "\n");
+    }
+}
+
+static void print_state() {
+    //print state
+    switch (game.state) {
+        case STATE_IDLE:
+            fprintf(stdout, "STATE_IDLE\n");
+            break;
+        case STATE_BET:
+            fprintf(stdout, "STATE_BET\n");
+            break;
+        case STATE_PLAY:
+            fprintf(stdout, "STATE_PLAY\n");
+            break;
+        case STATE_FINISH:
+            fprintf(stdout, "STATE_FINISH\n");
+            break;
+        default:
+            fprintf(stdout, "ERROR\n");
+            break;
+    }
+
+    //print dealer
+    fprintf(stdout, "dealer\n hand:");
+    for (int i = 0; i < game.d_num_cards; i++)
+        print_card(game.d_cards[i]);
+    fprintf(stdout, "\n");
+
+    //print players
+    fprintf(stdout,"players\n");
+    for (int i = 0; i < game.max_players; i++)
+        print_player(i);
+    fprintf(stdout, "\n");
+}
+
 void server() {
     uint8_t packet[MAX_PACKET_LEN];
 
@@ -513,6 +586,7 @@ void server() {
             game.cur_player = next_player(-1);//deal with being kicked or not active
             //send request to player
         }
+        print_state();
         //check if need to kick player
     }
 
