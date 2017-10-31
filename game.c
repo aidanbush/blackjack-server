@@ -245,7 +245,8 @@ int init_deck() {
     }
 
     shuffle_cards();
-    return 52 * rules.decks;
+    game.deck.num_cards = 52 * rules.decks;
+    return game.deck.num_cards;
 }
 
 void free_deck() {
@@ -614,6 +615,8 @@ void round_end() {
     }
     //reset deck if needed ---TODO may want to move into separate function
     if (game.deck.cur_card > (game.deck.num_cards / 2)) {
+        fprintf(stderr, "shuffling cards\n");
+        fprintf(stderr, "cur_card:%d numcards:%d\n", game.deck.cur_card, game.deck.num_cards);
         shuffle_cards();
         game.deck.cur_card = 0;
     }
