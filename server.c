@@ -522,6 +522,9 @@ void server() {
 
         opcode = get_opcode(packet);
 
+        fprintf(stderr, "print STATE before\n");
+        print_state();
+
         //switch on opcode
         switch (opcode) {
             //each opcode calls different function
