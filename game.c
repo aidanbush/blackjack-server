@@ -271,7 +271,7 @@ void deal_cards() {
     //players
     for (int i = 0; i < game.max_players; i++) {
         //if player exists
-        if (game.players[i] != NULL) {
+        if (game.players[i] != NULL && game.players[i]->active == 1) {
             game.players[i]->cards[0] = get_card();//deal cards
             game.players[i]->cards[1] = get_card();
             game.players[i]->num_cards = 2;
