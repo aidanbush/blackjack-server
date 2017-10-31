@@ -388,13 +388,13 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
         return -1;
     }
 
-    //if in idle state set them to be active
-    if (game.state == STATE_IDLE) {//currently redundant
+    //if in idle state set them to be active or they are after the current betting player
+    if (game.state == STATE_IDLE || (game.state == STATE_BET && game.cur_player < pos)) {//currently redundant
         game.players[pos]->active = 1;
     }
-    //if in bet state and they are after the current player set to active
-    else if (game.state == STATE_BET && game.cur_player < pos) {
-        game.players[pos]->active = 1;
+
+    if (game.cur_player == -1) {//if the current player is -1 and the state is idle
+        game.cur_player = next_player(game.cur_player);
     }
 
     //if idle go into bet
@@ -584,7 +584,7 @@ void server() {
             send_request();// do i want to move this to be timed
         }
         //if i need to start the round from idle
-        if (game.cur_player == -1 && game.state == STATE_IDLE && num_players() != 0) {
+        if (game.cur_player == -1 && game.state == STATE_IDLE && num_players() ! 0) {
             //set players to be active
             set_players_active();
             fprintf(stderr, "start round\n");
