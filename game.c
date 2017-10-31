@@ -278,27 +278,6 @@ void deal_cards() {
     }
 }
 
-//retunr 1 if the given player has a blackjack
-static int blackjack(int p) {
-    if (game.players[p] == NULL) {
-        return -1;
-    }
-    //if player was not dealt
-    if (game.players[p]->cards[0] == 0 || game.players[p] == 0)
-        return -1;
-
-    //if the player has blackjack
-    if ((game.players[p]->cards[0] + game.players[p]->cards[1]) == 21)
-        return 1;
-    return -1;
-}
-
-static int d_blackjack() {
-    if ((game.d_cards[0] + game.d_cards[1]) == 21)
-        return 1;
-    return -1;
-}
-
 static uint8_t card_value(uint8_t card) {
     uint8_t value = ((card - 1) % 13) + 1;
     if (value > 10)//if face card
@@ -306,6 +285,27 @@ static uint8_t card_value(uint8_t card) {
     if (value == 1)//if ace
         value = 11;
     return value;
+}
+
+//retunr 1 if the given player has a blackjack
+static int blackjack(int p) {
+    if (game.players[p] == NULL) {
+        return -1;
+    }
+    //if player was not dealt
+    if (game.players[p]->cards[0] == 0 || game.players[p]->cards[1] == 0)
+        return -1;
+
+    //if the player has blackjack
+    if (card_value(game.players[p]->cards[0]) + card_value(game.players[p]->cards[1]) == 21)
+        return 1;
+    return -1;
+}
+
+static int d_blackjack() {
+    if (card_value(game.d_cards[0]) + card_value(game.d_cards[1]) == 21)
+        return 1;
+    return -1;
 }
 
 //-1 if player does not exist
