@@ -578,7 +578,7 @@ void server() {
             send_request();// do i want to move this to be timed
         }
         //if i need to start the round from idle
-        if (game.cur_player == -1 && game.state == STATE_IDLE) {
+        if (game.cur_player == -1 && game.state == STATE_IDLE && num_players() == 0) {
             //set players to be active
             set_players_active();
             fprintf(stderr, "start round\n");
