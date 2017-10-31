@@ -37,7 +37,7 @@ static int init_server() {
     };
     int err, sfd;
 
-    err = getaddrinfo(NULL, PORT, &hints, &res);
+    err = getaddrinfo(NULL, rules.port, &hints, &res);
     if (err != 0) {
         fprintf(stderr, "gai_err: %s\n", gai_strerror(err));
         return -1;
