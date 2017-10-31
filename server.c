@@ -147,7 +147,7 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
     //get player and check they exist
     int p = get_player_sock(recv_store);
     if (p == -1) {// check if player is in the game
-        fprintf(stderr, "stand from player not in game\n");
+        fprintf(stderr, "quit from player not in game\n");
         return -1;
     }
 
@@ -573,7 +573,7 @@ void server() {
             round_end();
             //send updated board
             send_request();
-            send_request();
+            send_request();//after a while send an updated one with the proper client its waiting for the next round
 
             kick_bankrupt();
             remove_kicked();
