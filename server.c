@@ -397,6 +397,12 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
         game.players[pos]->active = 1;
     }
 
+    //if idle go into bet
+    if (game.state == STATE_IDLE) {
+        fprintf(stderr, "Switing to bet state\n");
+        game.state = STATE_BET;
+    }
+
     //broadcast update
     send_state(&recv_store);
     return 1;//success
