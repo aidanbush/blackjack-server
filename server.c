@@ -575,6 +575,7 @@ void server() {
             send_request();
             send_request();
 
+            kick_bankrupt();
             remove_kicked();
             reset_game();
             fprintf(stderr, "round reset\n");

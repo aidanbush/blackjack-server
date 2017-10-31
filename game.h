@@ -133,6 +133,8 @@ int add_player_to_list(char *nick, uint32_t money);
 
 void round_end();
 
+void kick_bankrupt();
+
 void remove_kicked();
 
 void reset_game();

@@ -619,6 +619,14 @@ void round_end() {
     }
 }
 
+void kick_bankrupt() {
+    for (int i = 0; i < game.max_players; i++)
+        if (game.players[i] != NULL && game.players[i]->money < rules.min_bet) {
+            fprintf(stderr, "kicking %d due to insufficient funds\n", i);
+            game.players[i]->active = -1;
+        }
+}
+
 void remove_kicked() {
     //for all players
     for (int i = 0; i < game.max_players; i++)
