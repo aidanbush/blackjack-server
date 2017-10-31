@@ -23,6 +23,8 @@
 
 #define PLAYER_NAME_LEN 12
 
+#define PORT_LEN        6
+
 typedef struct user_s {
     char *name;
     uint32_t money;
@@ -39,6 +41,7 @@ typedef struct game_rules {
     int time;
     uint32_t start;
     uint32_t min_bet;
+    char port[PORT_LEN];
 } game_rules;
 
 typedef struct player_s {
