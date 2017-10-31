@@ -463,6 +463,7 @@ static void print_state() {
             break;
     }
 
+    fprintf(stderr, "num players: %d\n", num_players());
     fprintf(stderr, "current player: %d\n", game.cur_player);
 
     //print dealer
