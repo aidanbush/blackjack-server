@@ -160,7 +160,8 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
     }
     // deal with current player
     if (p == game.cur_player) {
-        game.cur_player = next_player(game.cur_player);
+        next_player(game.cur_player);
+        set_timer();
         fprintf(stderr, "updated current player now:%d\n", game.cur_player);
     }
     //if cur_player == -1 and there are no active players got to idle state
@@ -220,13 +221,15 @@ static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
     if (hit(p) == -1) {
         fprintf(stderr, "player bust\n");
         //if bust set next player
-        game.cur_player = next_player(game.cur_player);
+        next_player(game.cur_player);
+        set_timer();
         //if cur_layer == -1 next state
         if (game.cur_player == -1) {
             fprintf(stderr, "last player busted, state = STATE_FINAL\n");
             game.state = STATE_FINISH;
         }
     }
+    set_timer();
     return 1;
 }
 
@@ -265,7 +268,8 @@ static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store
     }
 
     //set stand by updating current player
-    game.cur_player = next_player(game.cur_player);
+    next_player(game.cur_player);
+    set_timer();
     //update state?
     if (game.cur_player == -1) {
         fprintf(stderr, "last players stand, state = STATE_FINAL\n");
@@ -327,7 +331,8 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
     game.players[p]->bet = bet;
 
     //update current player
-    game.cur_player = next_player(game.cur_player);
+    next_player(game.cur_player);
+    set_timer();
 
     //update gamestate
     if (game.cur_player == -1) {
@@ -393,8 +398,9 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
         game.players[pos]->active = 1;
     }
 
-    if (game.cur_player == -1) {//if the current player is -1 and the state is idle
-        game.cur_player = next_player(game.cur_player);
+    if (game.cur_player == -1 && game.state == STATE_IDLE) {//if the current player is -1 and the state is idle
+        next_player(game.cur_player);
+        set_timer();
     }
 
     //if idle go into bet
@@ -512,12 +518,16 @@ void server() {
         timeout.tv_usec = 250e3;
 
         nrdy = select(sfd + 1, &readfds, NULL, NULL, &timeout);
+
         if (nrdy == -1) {
             fprintf(stderr, "ERROR\n");
             continue;
         }
         //check error
         if (nrdy == 0) {
+            if (check_timer()) {
+                fprintf(stderr, "Kick Timeout\n");
+            }
             //fprintf(stderr, "TIMEOUT\n");
             continue;
         }
@@ -557,12 +567,10 @@ void server() {
                 break;
         }
 
-        //update timer
-        //if time up forward messages (messages are only send here)
-
         if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
             fprintf(stderr, "play round start, player:%d\n", game.cur_player);
-            game.cur_player = next_player(game.cur_player);
+            next_player(game.cur_player);
+            set_timer();
         } else if (game.state == STATE_FINISH) {
             fprintf(stderr, "in final state\n");
             //make dealers moves
@@ -592,11 +600,15 @@ void server() {
             //set state
             game.state = STATE_BET;
             //set player
-            game.cur_player = next_player(-1);//deal with being kicked or not active
+            next_player(-1);//deal with being kicked or not active
+            set_timer();
             //send request to player
         }
         print_state();
-        //check if need to kick player
+        //check if need to kick player------------------------------------------------
+        if (check_timer()) {
+            fprintf(stderr, "Kick Timeout\n");
+        }
     }
 
     close(sfd);

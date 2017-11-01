@@ -10,6 +10,7 @@
 #define GAME_H
 
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include <stdint.h>
 
@@ -71,14 +72,14 @@ typedef struct game_s {
     deck_s deck;
     uint8_t d_cards[MAX_NUM_CARDS];
     int d_shown_cards;
-    int d_num_cards; // todo implement
+    int d_num_cards;
     player_s *players[MAX_PLAYERS];
     int num_players;
     int max_players;
     uint16_t seq_num;
     game_state state;
     int cur_player;
-    int waiting;// remove
+    struct timeval kick_timer;
 } game_s;
 
 extern userlist_s userlist;
@@ -106,7 +107,7 @@ void kick_player(int p);
 
 int valid_nick(char *nick);
 
-int next_player(int cur);
+/*int*/void next_player(int cur);
 
 void set_players_active();
 
@@ -141,5 +142,11 @@ void kick_bankrupt();
 void remove_kicked();
 
 void reset_game();
+
+//timer
+
+void set_timer();
+
+int check_timer();
 
 #endif /* GAME_H */

@@ -90,7 +90,7 @@ void init_game() {
     game.seq_num = 0;
     game.state = STATE_IDLE;
     game.cur_player = -1;
-    game.waiting = 0;
+    gettimeofday(&game.kick_timer, NULL);
 }
 
 void free_game() {
@@ -195,18 +195,21 @@ int num_players() {
 }
 
 //return next player id
-int next_player(int cur) {// refactor to deal with game.cur_player
-    if (cur >= game.max_players)
-        return -1;
+void next_player(int cur) {// refactor to deal with game.cur_player
+    if (cur >= game.max_players){
+        game.cur_player =  -1;
+        return;
+    }
 
     if (cur < -1) cur = -1;
 
-    for (int i = cur+1; i < game.max_players; i++) {
+    for (int i = cur+1; i < game.max_players; i++)
         if (game.players[i] != NULL)
-            if (game.players[i]->active == 1)//if active
-                return i;
-    }
-    return -1;
+            if (game.players[i]->active == 1){//if active
+                game.cur_player = i;
+                return;
+            }
+    game.cur_player = -1;
 }
 
 void set_players_active() {
@@ -692,3 +695,23 @@ void reset_game() {
     game.cur_player = -1;
     set_num_players();
 }
+
+// TIMER
+
+//set/reset time
+void set_timer() {
+    gettimeofday(&game.kick_timer, NULL);
+    //update seconds
+    game.kick_timer.tv_sec += rules.time;
+}
+
+//check time
+int check_timer() {
+    struct timeval tmp;
+    gettimeofday(&tmp, NULL);
+    if (game.kick_timer.tv_sec - tmp.tv_sec < 0)
+        return 1;
+    return 0;
+}
+
+//kick
