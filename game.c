@@ -90,7 +90,7 @@ void init_game() {
     game.seq_num = 0;
     game.state = STATE_IDLE;
     game.cur_player = -1;
-    gettimeofday(&game.kick_timer, NULL);
+    set_timer();
 }
 
 void free_game() {
@@ -714,4 +714,27 @@ int check_timer() {
     return 0;
 }
 
-//kick
+void check_kick() {
+    //check if timer is up and the current player is not -1
+    if (!(check_timer() && game.cur_player != -1))
+        return;
+
+    fprintf(stderr, "kicking player: %d\n", game.cur_player);
+    //if in bet state and have not made a bet or idle state
+    if (game.state == STATE_IDLE ||
+                (game.state == STATE_BET
+                && game.players[game.cur_player] != NULL
+                && game.players[game.cur_player]->bet == 0)) {
+        delete_player(game.cur_player);//delete
+        if (num_players() == 0) {
+            game.state = STATE_IDLE;
+        }
+    } else {
+        kick_player(game.cur_player);//kick
+    }
+
+    //set next player
+    next_player(game.cur_player);
+    //set timer
+    set_timer();
+}

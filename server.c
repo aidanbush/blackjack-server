@@ -525,10 +525,7 @@ void server() {
         }
         //check error
         if (nrdy == 0) {
-            if (check_timer()) {
-                fprintf(stderr, "Kick Timeout\n");
-            }
-            //fprintf(stderr, "TIMEOUT\n");
+            check_kick();
             continue;
         }
 
@@ -606,9 +603,7 @@ void server() {
         }
         print_state();
         //check if need to kick player------------------------------------------------
-        if (check_timer()) {
-            fprintf(stderr, "Kick Timeout\n");
-        }
+        check_kick();
     }
 
     close(sfd);

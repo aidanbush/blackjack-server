@@ -147,6 +147,6 @@ void reset_game();
 
 void set_timer();
 
-int check_timer();
+void check_kick();
 
 #endif /* GAME_H */
