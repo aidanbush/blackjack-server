@@ -82,7 +82,7 @@ static int init_server() {
     return sfd;
 }
 
-int send_request() {
+static int send_request() {
     //create packet
     uint8_t *packet = create_status_packet(game.cur_player + 1);//check that the corect player
 
@@ -91,7 +91,7 @@ int send_request() {
         if (game.players[i] != NULL) {
             if (sendto(sfd, packet, STATUS_LEN, 0,
                         (struct sockaddr *) &game.players[i]->sock,
-                        sizeof(game.players[i]->sock)) != STATUS_LEN)
+                        sizeof(game.players[i]->sock)) != STATUS_LEN)//check for EINTER otherwise bail
                 fprintf(stderr, "could not send to %s\n", game.players[i]->nick);
         }
     }
@@ -99,7 +99,7 @@ int send_request() {
     return 1;
 }
 
-int send_state(struct sockaddr_storage *dest) {
+static int send_state(struct sockaddr_storage *dest) {
     //create packet
     uint8_t *packet = create_status_packet(0);
     if (packet == NULL) {
@@ -494,7 +494,7 @@ static void print_state() {
     fprintf(stdout, "\n");
 
     //print players
-    fprintf(stdout,"players\n");
+    fprintf(stdout, "players\n");
     for (int i = 0; i < game.max_players; i++)
         print_player(i);
     fprintf(stdout, "\n");
@@ -503,10 +503,26 @@ static void print_state() {
 static void check_timers() {
     check_kick();
     //check resend
-    if (check_resend_timer()) {
+    if (check_resend_timer() && game.state != STATE_IDLE) {
         fprintf(stderr, "resend timer\n");
         //resend
+        //send_request();
         //if in final state check if i need to change state
+        if (game.state == STATE_FINISH) {
+            fprintf(stderr, "game state == FINISH\n");
+            //increment counter
+            game.finish_resend++;
+            //if counter above threshold
+            if (game.finish_resend >= FINISH_SEND_THRESHOLD) {
+                fprintf(stderr, "ending finish state\n");
+                //update state
+                game.state = STATE_IDLE;
+                //reset finish_resend
+                game.finish_resend = 0;
+            }
+        }
+        //reset timer
+        set_resend_timer();
     }
 }
 
@@ -588,23 +604,23 @@ void server() {
             fprintf(stderr, "play round start, player:%d\n", game.cur_player);
             next_player(game.cur_player);
             set_timer();
-        } else if (game.state == STATE_FINISH) {
+        } else if (game.state == STATE_FINISH) {//finished state and first time in it -- use game.finish_resend
             fprintf(stderr, "in final state\n");
             //make dealers moves
             dealer_play();
-            game.state = STATE_IDLE;
+            game.state = STATE_IDLE;//REMOVE
             //update money
             round_end();
             //send updated board
-            send_request();
+            send_request();//keep one
             send_request();//after a while send an updated one with the proper client its waiting for the next round
 
-            kick_bankrupt();
-            remove_kicked();
-            reset_game();
+            kick_bankrupt();//MOVE
+            remove_kicked();//MOVE
+            reset_game();//MOVE
             fprintf(stderr, "round reset\n");
         }
-        if (game.state != STATE_IDLE) {
+        if (game.state != STATE_IDLE) {//move out once resend timer is working
             fprintf(stderr, "send_request\n");
             send_request();// do i want to move this to be timed
         }

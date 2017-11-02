@@ -26,6 +26,8 @@
 
 #define PORT_LEN        6
 
+#define FINISH_SEND_THRESHOLD   3
+
 typedef struct user_s {
     char *name;
     uint32_t money;
@@ -80,7 +82,7 @@ typedef struct game_s {
     game_state state;
     int cur_player;
     struct timeval kick_timer;
-    int finish_resend; // TODO implement
+    int finish_resend; // TODO implement and rename to resent
     struct timeval resend_timer; // TODO implement
 } game_s;
 
