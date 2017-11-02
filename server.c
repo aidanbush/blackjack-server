@@ -95,7 +95,7 @@ static int send_request() {
                 fprintf(stderr, "could not send to %s\n", game.players[i]->nick);
         }
     }
-    set_resend_timer();//--------------------------------resend timer
+    set_resend_timer();
     return 1;
 }
 
@@ -239,6 +239,7 @@ static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
         }
     }
     set_timer();
+    send_request();
     return 1;
 }
 
@@ -285,6 +286,7 @@ static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store
         game.state = STATE_FINISH;
         //deal with finish state
     }
+    send_request();
     return 1;
 }
 
@@ -345,13 +347,13 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 
     //update gamestate
     if (game.cur_player == -1) {
-        fprintf(stderr, "update state\n");
+        fprintf(stderr, "starting play state\n");
         deal_cards();//deal cards
         //set state
         game.state = STATE_PLAY;
     }
     //return success and update
-    return -1;
+    return 1;
 }
 
 static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
@@ -480,7 +482,7 @@ static void print_state() {
             fprintf(stdout, "STATE_FINISH\n");
             break;
         default:
-            fprintf(stdout, "ERROR\n");
+            fprintf(stdout, "ERROR IN STATE\n");
             break;
     }
 
@@ -629,6 +631,7 @@ void server() {
             fprintf(stderr, "play round start, player:%d\n", game.cur_player);
             next_player(game.cur_player);
             set_timer();
+            send_request();
         } else if (game.state == STATE_FINISH) {//finished state and first time in it -- use game.finish_resend
             fprintf(stderr, "in final state\n");
             //make dealers moves
