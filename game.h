@@ -107,7 +107,7 @@ void kick_player(int p);
 
 int valid_nick(char *nick);
 
-/*int*/void next_player(int cur);
+void next_player(int cur);
 
 void set_players_active();
 

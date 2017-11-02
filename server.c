@@ -143,6 +143,7 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
 static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     fprintf(stderr, "recieved quit\n");
     //if incorrect length
+        //still let quit ignore
 
     //get player and check they exist
     int p = get_player_sock(recv_store);
@@ -170,6 +171,13 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
         game.state = STATE_IDLE;
         fprintf(stderr, "no players\n");
     }
+
+    //if state == STATE_PLAY and
+    if (game.state == STATE_PLAY && game.cur_player == -1) {
+        fprintf(stderr, "in play state, and last active player quit\n");
+        game.state = STATE_FINISH;
+    }
+
     //deal with messages
     return 1;
 }
