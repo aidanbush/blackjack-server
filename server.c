@@ -95,6 +95,7 @@ int send_request() {
                 fprintf(stderr, "could not send to %s\n", game.players[i]->nick);
         }
     }
+    set_resend_timer();//--------------------------------resend timer
     return 1;
 }
 
@@ -501,6 +502,12 @@ static void print_state() {
 
 static void check_timers() {
     check_kick();
+    //check resend
+    if (check_resend_timer()) {
+        fprintf(stderr, "resend timer\n");
+        //resend
+        //if in final state check if i need to change state
+    }
 }
 
 void server() {

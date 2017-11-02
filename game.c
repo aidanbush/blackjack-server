@@ -23,6 +23,8 @@
 
 #define START_USER_LIST_LEN 8
 
+#define RESEND_DELAY    1// change to variable and getopt option
+
 //should be static
 static player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store) {
     player_s *player = malloc(sizeof(player_s));
@@ -90,7 +92,11 @@ void init_game() {
     game.seq_num = 0;
     game.state = STATE_IDLE;
     game.cur_player = -1;
+
+    game.finish_resend = 0;
     set_timer();
+    //set resend timer
+    set_resend_timer();
 }
 
 void free_game() {
@@ -706,7 +712,7 @@ void set_timer() {
 }
 
 //check time
-int check_timer() {
+static int check_kick_timer() {//rename
     struct timeval tmp;
     gettimeofday(&tmp, NULL);
     if (game.kick_timer.tv_sec - tmp.tv_sec < 0)
@@ -716,7 +722,7 @@ int check_timer() {
 
 void check_kick() {
     //check if timer is up and the current player is not -1
-    if (!(check_timer() && game.cur_player != -1))
+    if (!(check_kick_timer() && game.cur_player != -1))
         return;
 
     fprintf(stderr, "kicking player: %d\n", game.cur_player);
@@ -737,4 +743,17 @@ void check_kick() {
     next_player(game.cur_player);
     //set timer
     set_timer();
+}
+
+void set_resend_timer() {
+    gettimeofday(&game.resend_timer, NULL);
+    game.resend_timer.tv_sec += RESEND_DELAY;
+}
+
+int check_resend_timer() {
+    struct timeval tmp;
+    gettimeofday(&tmp, NULL);
+    if (game.resend_timer.tv_sec - tmp.tv_sec < 0)
+        return 1;
+    return 0;
 }

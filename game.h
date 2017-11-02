@@ -80,7 +80,7 @@ typedef struct game_s {
     game_state state;
     int cur_player;
     struct timeval kick_timer;
-    int final_resent; // TODO implement
+    int finish_resend; // TODO implement
     struct timeval resend_timer; // TODO implement
 } game_s;
 
@@ -150,5 +150,9 @@ void reset_game();
 void set_timer();
 
 void check_kick();
+
+void set_resend_timer();
+
+int check_resend_timer();
 
 #endif /* GAME_H */
