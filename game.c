@@ -704,6 +704,11 @@ void reset_game() {
 
 // TIMER
 
+//return different in miliseconds
+static int time_dif(struct timeval tv1, struct timeval tv2) {
+    return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000;
+}
+
 //set/reset time
 void set_timer() {
     gettimeofday(&game.kick_timer, NULL);
@@ -715,7 +720,7 @@ void set_timer() {
 static int check_kick_timer() {//rename
     struct timeval tmp;
     gettimeofday(&tmp, NULL);
-    if (game.kick_timer.tv_sec - tmp.tv_sec < 0)
+    if (time_dif(game.kick_timer, tmp) < 0)
         return 1;
     return 0;
 }
@@ -753,7 +758,7 @@ void set_resend_timer() {
 int check_resend_timer() {
     struct timeval tmp;
     gettimeofday(&tmp, NULL);
-    if (game.resend_timer.tv_sec - tmp.tv_sec < 0)
+    if (time_dif(game.resend_timer, tmp) < 0)
         return 1;
     return 0;
 }
