@@ -511,14 +511,22 @@ static void check_timers() {
         if (game.state == STATE_FINISH) {
             fprintf(stderr, "game state == FINISH\n");
             //increment counter
+            send_request();
             game.finish_resend++;
             //if counter above threshold
             if (game.finish_resend >= FINISH_SEND_THRESHOLD) {
                 fprintf(stderr, "ending finish state\n");
                 //update state
-                game.state = STATE_IDLE;
+                game.state = STATE_IDLE;//check state to go into
                 //reset finish_resend
                 game.finish_resend = 0;
+
+                kick_bankrupt();
+                remove_kicked();
+                reset_game();
+
+                //set_timer(); may want to add
+                fprintf(stderr, "round reset\n");
             }
         }
         //reset timer
@@ -608,17 +616,10 @@ void server() {
             fprintf(stderr, "in final state\n");
             //make dealers moves
             dealer_play();
-            game.state = STATE_IDLE;//REMOVE
             //update money
             round_end();
             //send updated board
             send_request();//keep one
-            send_request();//after a while send an updated one with the proper client its waiting for the next round
-
-            kick_bankrupt();//MOVE
-            remove_kicked();//MOVE
-            reset_game();//MOVE
-            fprintf(stderr, "round reset\n");
         }
         if (game.state != STATE_IDLE) {//move out once resend timer is working
             fprintf(stderr, "send_request\n");
