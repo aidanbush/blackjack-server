@@ -506,13 +506,10 @@ static void check_timers() {
     if (check_resend_timer() && game.state != STATE_IDLE) {
         fprintf(stderr, "resend timer\n");
         //resend
-        //send_request();
+        send_request();
         //if in final state check if i need to change state
         if (game.state == STATE_FINISH) {
             fprintf(stderr, "game state == FINISH\n");
-            //increment counter
-            send_request();
-            game.finish_resend++;
             //if counter above threshold
             if (game.finish_resend >= FINISH_SEND_THRESHOLD) {
                 fprintf(stderr, "ending finish state\n");
@@ -524,9 +521,15 @@ static void check_timers() {
                 kick_bankrupt();
                 remove_kicked();
                 reset_game();
+                //send updated state
+                send_request();
 
                 //set_timer(); may want to add
                 fprintf(stderr, "round reset\n");
+            } else {//else resend the end of round
+                //increment counter
+                send_request();
+                game.finish_resend++;
             }
         }
         //reset timer
@@ -569,7 +572,7 @@ void server() {
         }
         // timeout
         if (nrdy == 0) {
-            check_timers();
+            goto end_of_checks;
             continue;
         }
 
@@ -618,29 +621,24 @@ void server() {
             dealer_play();
             //update money
             round_end();
-            //send updated board
-            send_request();//keep one
+            send_request();
+            game.finish_resend++;
         }
-        if (game.state != STATE_IDLE) {//move out once resend timer is working
-            fprintf(stderr, "send_request\n");
-            send_request();// do i want to move this to be timed
-        }
+end_of_checks:
         //if i need to start the round from idle
         if (game.cur_player == -1 && game.state == STATE_IDLE && num_players() != 0) {
             //set players to be active
             set_players_active();
             fprintf(stderr, "start round\n");
-            //set state
             game.state = STATE_BET;
             //set player
             next_player(-1);//deal with being kicked or not active
             set_timer();
             //send request to player
         }
-        print_state();
-
         //check timers
         check_timers();
+        if (nrdy != 0) print_state();
     }
 
     close(sfd);
