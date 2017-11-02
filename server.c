@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <string.h>
+#include <signal.h>
 
 /* system libraries */
 #include <sys/types.h>
@@ -28,6 +29,26 @@
 #define PORT "4420"
 
 int sfd;
+
+volatile sig_atomic_t exit_server = 0;
+
+void sigint_handler(int par) {
+    exit_server = 1;
+}
+
+// creates the SIGINT interrupt handler
+int create_sigint_handler() {
+    struct sigaction interrupt = {
+            .sa_handler = &sigint_handler
+    };
+
+    int err = sigaction(SIGINT, &interrupt, NULL);
+    if (err == -1) {
+        perror("sigaction");
+        return -1;
+    }
+    return 0;
+}
 
 static int init_server() {
     struct addrinfo *res, hints = {
@@ -562,6 +583,12 @@ void server() {
         return;
     }
 
+    //setup interrupt
+    if (create_sigint_handler() == -1) {
+        fprintf(stderr, "unable to create interupt\n");
+        return;
+    }
+
     fd_set mfds, readfds;
     FD_ZERO(&mfds);
     FD_SET(sfd, &mfds);
@@ -573,7 +600,7 @@ void server() {
     int recv_len;
 
     // main loop
-    while(1/*interrupt atomic type variable*/) {
+    while(!exit_server) {
         //select setup
         readfds = mfds;
         timeout.tv_sec = 0;
@@ -583,7 +610,9 @@ void server() {
 
         // check error
         if (nrdy == -1) {
-            fprintf(stderr, "ERROR\n");
+            //if not einter
+            if (errno != EINTR)
+                fprintf(stderr, "ERROR\n");
             continue;
         }
         // timeout
