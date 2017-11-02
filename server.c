@@ -500,6 +500,17 @@ static void print_state() {
     fprintf(stdout, "\n");
 }
 
+static void start_new_round() {
+    set_players_active();
+    fprintf(stderr, "start round\n");
+    game.state = STATE_BET;
+    //set player
+    next_player(-1);//deal with being kicked or not active
+    set_timer();
+    //send request to player
+    send_request();
+}
+
 static void check_timers() {
     check_kick();
     //check resend
@@ -521,8 +532,9 @@ static void check_timers() {
                 kick_bankrupt();
                 remove_kicked();
                 reset_game();
-                //send updated state
-                send_request();
+                if (num_players() != 0) {
+                    start_new_round();
+                }
 
                 //set_timer(); may want to add
                 fprintf(stderr, "round reset\n");
@@ -561,7 +573,7 @@ void server() {
         //select setup
         readfds = mfds;
         timeout.tv_sec = 0;
-        timeout.tv_usec = 250e3;
+        timeout.tv_usec = 100e3;
 
         nrdy = select(sfd + 1, &readfds, NULL, NULL, &timeout);
 
@@ -627,14 +639,7 @@ void server() {
 end_of_checks:
         //if i need to start the round from idle
         if (game.cur_player == -1 && game.state == STATE_IDLE && num_players() != 0) {
-            //set players to be active
-            set_players_active();
-            fprintf(stderr, "start round\n");
-            game.state = STATE_BET;
-            //set player
-            next_player(-1);//deal with being kicked or not active
-            set_timer();
-            //send request to player
+            start_new_round();//set players to be active
         }
         //check timers
         check_timers();
