@@ -512,7 +512,9 @@ static void start_new_round() {
 }
 
 static void check_timers() {
-    check_kick();
+    if(check_kick()) {
+        send_error(ERROR_OP_TIME, &game.players[game.cur_player]->sock, "");
+    }
     //check resend
     if (check_resend_timer() && game.state != STATE_IDLE) {
         fprintf(stderr, "resend timer\n");

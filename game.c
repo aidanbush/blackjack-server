@@ -725,10 +725,10 @@ static int check_kick_timer() {//rename
     return 0;
 }
 
-void check_kick() {
+int check_kick() {
     //check if timer is up and the current player is not -1
     if (!(check_kick_timer() && game.cur_player != -1))
-        return;
+        return 0;
 
     fprintf(stderr, "kicking player: %d\n", game.cur_player);
     //if in bet state and have not made a bet or idle state
@@ -742,12 +742,14 @@ void check_kick() {
         }
     } else {
         kick_player(game.cur_player);//kick
+        return 1;
     }
 
     //set next player
     next_player(game.cur_player);
     //set timer
     set_timer();
+    return 0;
 }
 
 void set_resend_timer() {

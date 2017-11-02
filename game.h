@@ -151,7 +151,7 @@ void reset_game();
 
 void set_timer();
 
-void check_kick();
+int check_kick();
 
 void set_resend_timer();
 
