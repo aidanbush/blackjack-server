@@ -499,6 +499,10 @@ static void print_state() {
     fprintf(stdout, "\n");
 }
 
+static void check_timers() {
+    check_kick();
+}
+
 void server() {
     uint8_t packet[MAX_PACKET_LEN];
 
@@ -527,13 +531,14 @@ void server() {
 
         nrdy = select(sfd + 1, &readfds, NULL, NULL, &timeout);
 
+        // check error
         if (nrdy == -1) {
             fprintf(stderr, "ERROR\n");
             continue;
         }
-        //check error
+        // timeout
         if (nrdy == 0) {
-            check_kick();
+            check_timers();
             continue;
         }
 
@@ -580,7 +585,6 @@ void server() {
             fprintf(stderr, "in final state\n");
             //make dealers moves
             dealer_play();
-            //idle?
             game.state = STATE_IDLE;
             //update money
             round_end();
@@ -610,8 +614,9 @@ void server() {
             //send request to player
         }
         print_state();
-        //check if need to kick player------------------------------------------------
-        check_kick();
+
+        //check timers
+        check_timers();
     }
 
     close(sfd);
