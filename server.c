@@ -116,6 +116,7 @@ static int send_request() {
                 fprintf(stderr, "could not send to %s\n", game.players[i]->nick);
         }
     }
+    free(packet);
     set_resend_timer();
     return 1;
 }
