@@ -101,14 +101,14 @@ uint8_t *create_status_packet(uint8_t player) {
     return create_packet(player, (OPCODE_STATUS));
 }
 
-void print_packet_name(uint8_t *packet, int start) {
+static void print_packet_name(uint8_t *packet, int start) {
     printf("pn:");
     for (int i = 0; i < PLAYER_NAME_LEN; i++)
         printf("%x", *(packet + start + i));
     printf(" ");
 }
 
-void print_cards(uint8_t *packet, int start) {
+static void print_cards(uint8_t *packet, int start) {
     printf("dc");
     for (int i = 0; i < (MAX_NUM_CARDS); i++) {
         printf(" %1x", *(packet + start + i));
@@ -116,7 +116,7 @@ void print_cards(uint8_t *packet, int start) {
     printf("\n");
 }
 
-void print_packet_players(uint8_t *packet) {
+static void print_packet_players(uint8_t *packet) {
     int p_off;
     //for all players
     for (int i = 0; i < (MAX_PLAYERS); i++) {
@@ -180,9 +180,6 @@ int check_packet(uint8_t *packet, int len, struct sockaddr_storage recv_store, i
     if (len != e_len)
         return P_CHECK_LEN;
 
-    if (validate_packet(packet) != 0)
-        fprintf(stderr, "invalid packet\n");
-
     //check state
     if (game.state != e_state)
         return P_CHECK_STATE;
@@ -199,6 +196,9 @@ int check_packet(uint8_t *packet, int len, struct sockaddr_storage recv_store, i
     //if current player
     if (p != game.cur_player)
         return P_CHECK_N_CUR;
+
+    if (validate_packet(packet) != 0)
+        return P_CHECK_INVAL;
 
     return p;
 }

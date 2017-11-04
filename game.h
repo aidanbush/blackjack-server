@@ -82,8 +82,8 @@ typedef struct game_s {
     game_state state;
     int cur_player;
     struct timeval kick_timer;
-    int finish_resend; // TODO implement and rename to resent
-    struct timeval resend_timer; // TODO implement
+    int finish_resend;
+    struct timeval resend_timer;
 } game_s;
 
 extern userlist_s userlist;

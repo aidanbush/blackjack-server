@@ -22,6 +22,7 @@
 #include <sys/time.h>
 
 /* project includes */
+#include "server.h"
 #include "packet.h"
 #include "game.h"
 
@@ -81,7 +82,6 @@ static int init_server() {
             continue;
         }
 
-        //bind
         err = bind(sfd, cur->ai_addr, cur->ai_addrlen);
         if (err == -1) {
             perror("bind");
@@ -124,7 +124,7 @@ static int send_state(struct sockaddr_storage *dest) {
     //create packet
     uint8_t *packet = create_status_packet(0);
     if (packet == NULL) {
-        fprintf(stderr, "packet creation failed\n");
+        if (verbosity >= 1) fprintf(stderr, "packet creation failed\n");
         return -1;
     }
     //send packet
@@ -146,7 +146,7 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     int len = sendto(sfd, packet, ERROR_LEN, 0, (struct sockaddr *) dest, sizeof(*dest));
     if (len != ERROR_LEN) {
         perror("sendto");
-        fprintf(stderr, "ERROR SEND LEN got:%d\n", len);
+        if (verbosity >= 1) fprintf(stderr, "ERROR SEND LEN got:%d\n", len);
         return -1;
     }
 
@@ -171,18 +171,18 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
 
 //need to deal with when im in the bet state and have only the one client
 static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
-    fprintf(stderr, "recieved quit\n");
+    if (verbosity >= 2) fprintf(stderr, "recieved quit\n");
 
     //get player and check they exist
     int p = get_player_sock(recv_store);
     if (p == -1) {// check if player is in the game
-        fprintf(stderr, "quit from player not in game\n");
+        if (verbosity >= 1) fprintf(stderr, "quit from player not in game\n");
         return -1;
     }
 
     //set them to kicked
     kick_player(p);
-    fprintf(stderr, "kicked player:%d\n", p);
+    if (verbosity >= 3) fprintf(stderr, "kicked player:%d\n", p);
     //if state is idle or beting, and they have not bet delete them
     if (game.state == STATE_IDLE || (game.state == STATE_BET && game.players[p]->bet == 0)){
         delete_player(p);//delete them
@@ -191,19 +191,18 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
     if (p == game.cur_player) {
         next_player(game.cur_player);
         set_timer();
-        fprintf(stderr, "updated current player now:%d\n", game.cur_player);
     }
     //if cur_player == -1 and there are no active players got to idle state
     if (game.state == STATE_BET && num_players() == 0) {
         game.cur_player = -1;
         game.state = STATE_IDLE;
-        fprintf(stderr, "no players\n");
+        if (verbosity >= 3) fprintf(stderr, "state now STATE_IDLE\n");
     }
 
-    //if state == STATE_PLAY and
+    //if state == STATE_PLAY and current player not
     if (game.state == STATE_PLAY && game.cur_player == -1) {
-        fprintf(stderr, "in play state, and last active player quit\n");
         game.state = STATE_FINISH;
+        if (verbosity >= 3) fprintf(stderr, "state now STATE_FINISH\n");
     }
 
     //deal with messages
@@ -211,26 +210,29 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
 }
 
 static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
-    fprintf(stderr, "recived hit\n");
+    if (verbosity >= 2) fprintf(stderr, "recived hit\n");
 
     int p = check_packet(packet, len, recv_store, HIT_LEN, STATE_PLAY);
     switch (p) {
         case P_CHECK_LEN:
-            fprintf(stderr, "send error HIT_LEN%d\n", len);
+            if (verbosity >= 1) fprintf(stderr, "send error HIT_LEN%d\n", len);
             send_error(ERROR_OP_GEN, &recv_store, "");
             return -1;
         case P_CHECK_STATE:
-            fprintf(stderr, "incorrect state not play\n");
+            if (verbosity >= 1) fprintf(stderr, "incorrect state not play\n");
             send_error(ERROR_OP_GEN, &recv_store, "");
             return -1;
         case P_CHECK_DNE:
-            fprintf(stderr, "stand from player not in game\n");
+            if (verbosity >= 1) fprintf(stderr, "stand from player not in game\n");
             return -1;
         case P_CHECK_N_ACTIVE:
-            fprintf(stderr, "stand from non active player\n");
+            if (verbosity >= 1) fprintf(stderr, "stand from non active player\n");
             return -1;
         case P_CHECK_N_CUR:
-            fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
+            if (verbosity >= 1) fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
+            return -1;
+        case P_CHECK_INVAL:
+            if (verbosity >= 1) fprintf(stderr, "packet does not match the expected state\n");
             return -1;
         default:
             break;
@@ -238,13 +240,13 @@ static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 
     //make hit play
     if (hit(p) == -1) {
-        fprintf(stderr, "player bust\n");
+        if (verbosity >= 3) fprintf(stderr, "player bust\n");
         //if bust set next player
         next_player(game.cur_player);
         set_timer();
         //if cur_layer == -1 next state
         if (game.cur_player == -1) {
-            fprintf(stderr, "last player busted, state = STATE_FINAL\n");
+            if (verbosity >= 3) fprintf(stderr, "state now STATE_FINISH, last player busted\n");
             game.state = STATE_FINISH;
         }
     }
@@ -254,27 +256,30 @@ static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 }
 
 static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
-    fprintf(stderr, "recieved stand\n");
+   if (verbosity >= 1)  fprintf(stderr, "recieved stand\n");
 
     int p = check_packet(packet, len, recv_store, STAND_LEN, STATE_PLAY);
 
     switch (p) {
         case P_CHECK_LEN:
-            fprintf(stderr, "send error STAND_LEN%d\n", len);
+            if (verbosity >= 1) fprintf(stderr, "send error STAND_LEN%d\n", len);
             send_error(ERROR_OP_GEN, &recv_store, "");
             return -1;
         case P_CHECK_STATE:
-            fprintf(stderr, "incorrect state not play\n");
+            if (verbosity >= 1) fprintf(stderr, "incorrect state not play\n");
             send_error(ERROR_OP_GEN, &recv_store, "");
             return -1;
         case P_CHECK_DNE:
-            fprintf(stderr, "stand from player not in game\n");
+            if (verbosity >= 1) fprintf(stderr, "stand from player not in game\n");
             return -1;
         case P_CHECK_N_ACTIVE:
-            fprintf(stderr, "stand from non active player\n");
+            if (verbosity >= 1) fprintf(stderr, "stand from non active player\n");
             return -1;
         case P_CHECK_N_CUR:
-            fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
+            if (verbosity >= 1) fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
+            return -1;
+        case P_CHECK_INVAL:
+            if (verbosity >= 1) fprintf(stderr, "packet does not match the expected state\n");
             return -1;
         default:
             break;
@@ -285,7 +290,7 @@ static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store
     set_timer();
     //update state?
     if (game.cur_player == -1) {
-        fprintf(stderr, "last players stand, state = STATE_FINAL\n");
+        if (verbosity >= 3) fprintf(stderr, "state now STATE_FINISH, last player stood\n");
         game.state = STATE_FINISH;
         //deal with finish state
     }
@@ -300,28 +305,31 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
     int p = check_packet(packet, len, recv_store, BET_LEN, STATE_BET);
     switch (p) {
         case P_CHECK_LEN:
-            fprintf(stderr, "send error BET_LEN%d\n", len);
+            if (verbosity >= 1) fprintf(stderr, "send error BET_LEN%d\n", len);
             send_error(ERROR_OP_GEN, &recv_store, "");
             return -1;
         case P_CHECK_STATE:
-            fprintf(stderr, "incorrect state not bet\n");
+            if (verbosity >= 1) fprintf(stderr, "incorrect state not bet\n");
             send_error(ERROR_OP_GEN, &recv_store, "");
             return -1;
         case P_CHECK_DNE:
-            fprintf(stderr, "bet from player not in game\n");
+            if (verbosity >= 1) fprintf(stderr, "bet from player not in game\n");
             return -1;
         case P_CHECK_N_ACTIVE:
-            fprintf(stderr, "bet from non active player\n");
+            if (verbosity >= 1) fprintf(stderr, "bet from non active player\n");
             return -1;
         case P_CHECK_N_CUR:
-            fprintf(stderr, "bet from player non current player:%d\n", game.cur_player);
+            if (verbosity >= 1) fprintf(stderr, "bet from player non current player:%d\n", game.cur_player);
+            return -1;
+        case P_CHECK_INVAL:
+            if (verbosity >= 1) fprintf(stderr, "packet does not match the expected state\n");
             return -1;
         default:
             break;
     }
     //check if player already bet
     if (game.players[p]->bet != 0) {
-        fprintf(stderr, "bet from player who already bet\n");
+        if (verbosity >= 1) fprintf(stderr, "bet from player who already bet\n");
         return -1;
     }
 
@@ -329,8 +337,9 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
     uint32_t bet = get_bet(packet);
     //check if bet is valid and they have enough money
     if (bet < rules.min_bet || bet > game.players[p]->money) {
-        fprintf(stderr, "send error\n");
+        if (verbosity >= 1) fprintf(stderr, "bet outside of valid range\n");
         send_error(ERROR_OP_MONEY, &recv_store, "");
+        set_timer();
         return -1;
     }
 
@@ -343,7 +352,7 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 
     //update gamestate
     if (game.cur_player == -1) {
-        fprintf(stderr, "starting play state\n");
+        if (verbosity >= 3) fprintf(stderr, "state new STATE_PLAY, last player bet\n");
         deal_cards();//deal cards
         //set state
         game.state = STATE_PLAY;
@@ -353,10 +362,10 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 }
 
 static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
-    fprintf(stderr, "GOT CONNECT\n");
+    if (verbosity >= 1) fprintf(stderr, "GOT CONNECT\n");
     //if no space
     if (game.num_players >= game.max_players) {
-        fprintf(stderr, "send error SEATS\n");
+        if (verbosity >= 1) fprintf(stderr, "send error SEATS\n");
         //send error message
         send_error(ERROR_OP_SEATS, &recv_store, "");
         return -1;
@@ -365,7 +374,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     // packet length incorrect
     if (len != CONNECT_LEN) {
         //send error message
-        fprintf(stderr, "send error CONNECT_LEN%d\n", len);
+        if (verbosity >= 1) fprintf(stderr, "send error CONNECT_LEN%d\n", len);
         send_error(ERROR_OP_GEN, &recv_store, "");
         //return error
         return -1;
@@ -375,7 +384,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //copy nick into array on stack with null terminator;
     char new_nick[PLAYER_NAME_LEN + 1]; // TODO test---------------------
     if (strncpy(new_nick, nick, PLAYER_NAME_LEN) == NULL) {
-        fprintf(stderr, "send error strncpy fail\n");
+        if (verbosity >= 1) fprintf(stderr, "send error strncpy fail\n");
         send_error(ERROR_OP_GEN, &recv_store, "");
         return -1;
     }
@@ -383,7 +392,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     // verify nickname
     if (valid_nick(new_nick) == -1) {;
         //send error message
-        fprintf(stderr, "send error invalid nick\n");
+        if (verbosity >= 1) fprintf(stderr, "send error invalid nick\n");
         send_error(ERROR_OP_NICK_INV, &recv_store, "");
         return -1;
     }
@@ -391,11 +400,11 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
     //add player
     int pos = add_player(nick, recv_store);
     if (pos == -1) {//need to also add connection information
-        fprintf(stderr, "send error add player fail\n");
+        if (verbosity >= 1) fprintf(stderr, "send error add player fail\n");
         send_error(ERROR_OP_GEN, &recv_store, "");
         return -1;//if error return error dont respond to save memory???--------------
     } else if (pos == -2) {
-        fprintf(stderr, "send error nick taken\n");
+        if (verbosity >= 1) fprintf(stderr, "send error nick taken\n");
         send_error(ERROR_OP_NICK_TAKEN, &recv_store, "");
         return -1;
     }
@@ -412,7 +421,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
 
     //if idle go into bet
     if (game.state == STATE_IDLE) {
-        fprintf(stderr, "Switing to bet state\n");
+        if (verbosity >= 1) fprintf(stderr, "state now STATE_BET, first player joined\n");
         game.state = STATE_BET;
     }
 
@@ -462,7 +471,7 @@ static void print_player(int p) {
 }
 
 static void print_state() {
-    fprintf(stderr, "\n");
+    fprintf(stdout, "\n");
     //print state
     switch (game.state) {
         case STATE_IDLE:
@@ -482,8 +491,8 @@ static void print_state() {
             break;
     }
 
-    fprintf(stderr, "num players: %d\n", num_players());
-    fprintf(stderr, "current player: %d\n", game.cur_player);
+    fprintf(stdout, "num players: %d\n", num_players());
+    fprintf(stdout, "current player: %d\n", game.cur_player);
 
     //print dealer
     fprintf(stdout, "dealer\n hand:");
@@ -500,7 +509,7 @@ static void print_state() {
 
 static void start_new_round() {
     set_players_active();
-    fprintf(stderr, "start round\n");
+    if (verbosity >= 1) fprintf(stderr, "state now STATE_BET, new round starting\n");
     game.state = STATE_BET;
     //set player
     next_player(-1);//deal with being kicked or not active
@@ -519,15 +528,13 @@ static void check_timers() {
     }
     //check resend
     if (check_resend_timer() && game.state != STATE_IDLE) {
-        fprintf(stderr, "resend timer\n");
+        if (verbosity >= 4) fprintf(stderr, "resending packet\n");
         //resend
         send_request();
         //if in final state check if i need to change state
         if (game.state == STATE_FINISH) {
-            fprintf(stderr, "game state == FINISH\n");
-            //if counter above threshold
             if (game.finish_resend >= FINISH_SEND_THRESHOLD) {
-                fprintf(stderr, "ending finish state\n");
+                if (verbosity >= 3) fprintf(stderr, "state now STATE_IDLE, end of finish state\n");
                 //update state
                 game.state = STATE_IDLE;//check state to go into
                 //reset finish_resend
@@ -538,7 +545,7 @@ static void check_timers() {
                 // SHOULD I DO THIS
                 for (int i = 0; i < game.max_players; i++) {
                     if (game.players[i] != NULL && game.players[i]->active == -1) {
-                        fprintf(stderr, "deleting kicked player:%d\n", i);
+                        if (verbosity >= 1) fprintf(stderr, "deleting kicked player:%d\n", i);
                         //send error message
                         send_error(ERROR_OP_MONEY, &game.players[i]->sock, "");//sends out redundant and incorrect error messages
                         //delete
@@ -550,9 +557,6 @@ static void check_timers() {
                 if (num_players() != 0) {
                     start_new_round();
                 }
-
-                //set_timer(); may want to add
-                fprintf(stderr, "round reset\n");
             } else {//else resend the end of round
                 //increment counter
                 send_request();
@@ -569,13 +573,13 @@ void server() {
 
     sfd = init_server();
     if (sfd == -1) {
-        fprintf(stderr, "unable to create server\n");
+        if (verbosity >= 1) fprintf(stderr, "unable to create server\n");
         return;
     }
 
     //setup interrupt
     if (create_sigint_handler() == -1) {
-        fprintf(stderr, "unable to create interupt\n");
+        if (verbosity >= 1) fprintf(stderr, "unable to setup interupt handler\n");
         return;
     }
 
@@ -602,7 +606,7 @@ void server() {
         if (nrdy == -1) {
             //if not einter
             if (errno != EINTR)
-                fprintf(stderr, "ERROR\n");
+                if (verbosity >= 1) perror("select");
             continue;
         }
         // timeout
@@ -611,14 +615,14 @@ void server() {
             continue;
         }
 
-        fprintf(stderr, "got msg\n");
+        if (verbosity >= 4) fprintf(stderr, "recieved a packet\n");
         recv_len = recvfrom(sfd, &packet, sizeof(packet), 0,
                             (struct sockaddr*) &recv_store, &recv_addr_len);
 
         opcode = get_opcode(packet);
 
-        fprintf(stderr, "print STATE before\n");
-        print_state();
+        if (verbosity >= 5) fprintf(stderr, "print STATE before\n");
+        if (verbosity >= 5) print_state();
 
         //switch on opcode
         switch (opcode) {
@@ -647,12 +651,12 @@ void server() {
         }
 
         if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
-            fprintf(stderr, "play round start, player:%d\n", game.cur_player);
+            if (verbosity >= 3) fprintf(stderr, "play round start initializing first player%d\n");
             next_player(game.cur_player);
             set_timer();
             send_request();
         } else if (game.state == STATE_FINISH) {//finished state and first time in it -- use game.finish_resend
-            fprintf(stderr, "in final state\n");
+            if (verbosity >= 3) fprintf(stderr, "final state start initializing end of game logic\n");
             //make dealers moves
             dealer_play();
             //update money
@@ -667,7 +671,8 @@ end_of_checks:
         }
         //check timers
         check_timers();
-        if (nrdy != 0) print_state();
+        //if it did not jump from the timeout
+        if (nrdy != 0) if (verbosity >= 5) print_state();
     }
 
     close(sfd);

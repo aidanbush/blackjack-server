@@ -45,6 +45,7 @@
 #define P_CHECK_DNE         -3
 #define P_CHECK_N_ACTIVE    -4
 #define P_CHECK_N_CUR       -5
+#define P_CHECK_INVAL       -6
 
 #define MAX_PACKET_LEN (STATUS_LEN)
 
@@ -59,6 +60,8 @@ uint32_t get_bet(uint8_t *packet);
 uint8_t get_opcode(uint8_t *packet);
 
 char *get_connect_nick(uint8_t *packet);
+
+void print_packet(uint8_t *packet);
 
 //return from player id if correct else -1 through -4 for the error it caught
 /*-1 len error, -2 state error, -3 player does not exist, -4 player in not active, -5 not current player*/
