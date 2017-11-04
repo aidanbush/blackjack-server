@@ -33,7 +33,7 @@
 #define OFF_PLAYER_CARDS    (OFF_PLAYER_BET) + 4
 #define OFF_PLAYER_LEN      41
 
-#define VALIDATE_OFF    OFF_SEQ_NUM // start at seqnum
+#define VALIDATE_OFF    OFF_MIN_BET // after seqnum
 #define VALIDATE_LEN    ((STATUS_LEN) - (VALIDATE_OFF))
 
 #define CONNECT_NICK_OFF 1
@@ -101,8 +101,60 @@ uint8_t *create_status_packet(uint8_t player) {
     return create_packet(player, (OPCODE_STATUS));
 }
 
-int validate_packet(uint8_t *packet_1, uint8_t *packet_2) {
-    return memcmp(packet_1 + (VALIDATE_OFF), packet_2 + (VALIDATE_OFF), (VALIDATE_LEN));
+void print_packet_name(uint8_t *packet, int start) {
+    printf("pn:");
+    for (int i = 0; i < PLAYER_NAME_LEN; i++)
+        printf("%x", *(packet + start + i));
+    printf(" ");
+}
+
+void print_cards(uint8_t *packet, int start) {
+    printf("dc");
+    for (int i = 0; i < (MAX_NUM_CARDS); i++) {
+        printf(" %1x", *(packet + start + i));
+    }
+    printf("\n");
+}
+
+void print_packet_players(uint8_t *packet) {
+    int p_off;
+    //for all players
+    for (int i = 0; i < (MAX_PLAYERS); i++) {
+        p_off = (OFF_PLAYER_START) + (OFF_PLAYER_LEN) * i;
+        //print name
+        print_packet_name(packet, p_off);
+        //print bank
+        printf("bn:%4x", *(uint32_t *)(packet + p_off + OFF_PLAYER_BANK));
+        //print bet
+        printf("bt:%4x\n", *(uint32_t *)(packet + p_off + OFF_PLAYER_BET));
+        //print cards
+        print_cards(packet, p_off + OFF_PLAYER_CARDS);
+    }
+}
+
+void print_packet(uint8_t *packet) {
+    //opcode
+    printf("op:%1x ", *packet);
+    //responce args
+    printf("ra:%4x ", *(uint32_t *)(packet + 1));
+    //seq_num
+    printf("sq:%2x ", *(uint16_t *)(packet + OFF_SEQ_NUM));
+    //min bet
+    printf("mb:%4x ", *(uint32_t *)(packet + OFF_MIN_BET));
+    //active player
+    printf("ap:%1x\n", *(packet + OFF_PLAYER));
+    //dealer cards
+    print_cards(packet, (OFF_D_CARDS));
+    //print players
+    print_packet_players(packet);
+}
+
+int validate_packet(uint8_t *packet_1) {
+    //generate packet
+    uint8_t *packet_2 = create_status_packet(game.cur_player + 1);
+    int cmp = memcmp(packet_1 + (VALIDATE_OFF), packet_2 + (VALIDATE_OFF), (VALIDATE_LEN));
+    free(packet_2);
+    return cmp;
 }
 
 uint32_t get_bet(uint8_t *packet) {
@@ -127,6 +179,9 @@ int check_packet(uint8_t *packet, int len, struct sockaddr_storage recv_store, i
     //check length
     if (len != e_len)
         return P_CHECK_LEN;
+
+    if (validate_packet(packet) != 0)
+        fprintf(stderr, "invalid packet\n");
 
     //check state
     if (game.state != e_state)
