@@ -103,6 +103,7 @@ static int init_server() {
 }
 
 static int send_request() {
+    if (verbosity >= 4) fprintf(stderr, "sending broadcast update\n");
     //create packet
     uint8_t *packet = create_status_packet(game.cur_player + 1);//check that the corect player
 
@@ -112,7 +113,7 @@ static int send_request() {
             if (sendto(sfd, packet, STATUS_LEN, 0,
                         (struct sockaddr *) &game.players[i]->sock,
                         sizeof(game.players[i]->sock)) != STATUS_LEN)//check for EINTER otherwise bail
-                fprintf(stderr, "could not send to %s\n", game.players[i]->nick);
+                if (verbosity >= 1) fprintf(stderr, "could not send to %s\n", game.players[i]->nick);
         }
     }
     free(packet);
@@ -425,7 +426,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
         game.state = STATE_BET;
     }
 
-    //broadcast update
+    if (verbosity >= 4) fprintf(stderr, "sending connect state update\n");
     send_state(&recv_store);
     return 1;//success
 }
