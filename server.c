@@ -300,7 +300,7 @@ static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store
 
 
 static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
-    fprintf(stderr, "recieved bet\n");
+    if (verbosity >= 1) fprintf(stderr, "recieved bet\n");
 
     int p = check_packet(packet, len, recv_store, BET_LEN, STATE_BET);
     switch (p) {

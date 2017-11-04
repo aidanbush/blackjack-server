@@ -86,6 +86,8 @@ typedef struct game_s {
     struct timeval resend_timer;
 } game_s;
 
+extern int verbosity;
+
 extern userlist_s userlist;
 extern game_rules rules;
 extern game_s game;

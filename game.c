@@ -601,31 +601,29 @@ void round_end() {
             p_value = player_hand_value(i);
             if (p_value > 21)// if bust
                 p_value = -1;
-            fprintf(stderr, "results for player :%d\n", i);
+            if (verbosity >= 3) fprintf(stderr, "results for player :%d\n", i);
             if (blackjack(i) == 1) {// if blackjack
                 if(d_black == 1) {// if both no one wins
-                    fprintf(stderr, "both blackjack\n");
+                    if (verbosity >= 3) fprintf(stderr, "both blackjack\n");
                     player_tie(i);//return money
                 } else {
-                    fprintf(stderr, "player blackjack\n");
+                    if (verbosity >= 3) fprintf(stderr, "player blackjack\n");
                     player_blackjack(i);//win 1.5x money
                 }
             } else if (p_value > d_value) {//else if above
-                fprintf(stderr, "player win\n");
+                if (verbosity >= 3) fprintf(stderr, "player won\n");
                 player_win(i);//win money
             } else if (p_value == d_value) {//else if tie
-                fprintf(stderr, "tie\n");
+                if (verbosity >= 3) fprintf(stderr, "tie\n");
                 player_tie(i);//return money
             } else {//else lose
-                fprintf(stderr, "player losses\n");
+                if (verbosity >= 3) fprintf(stderr, "player lost\n");
                 player_lost(i);//lose money
             }
         }
     }
     //reset deck if needed ---TODO may want to move into separate function
     if (game.deck.cur_card > (game.deck.num_cards / 2)) {
-        fprintf(stderr, "shuffling cards\n");
-        fprintf(stderr, "cur_card:%d numcards:%d\n", game.deck.cur_card, game.deck.num_cards);
         shuffle_cards();
         game.deck.cur_card = 0;
     }
@@ -634,7 +632,7 @@ void round_end() {
 void kick_bankrupt() {
     for (int i = 0; i < game.max_players; i++)
         if (game.players[i] != NULL && game.players[i]->money < rules.min_bet) {
-            fprintf(stderr, "kicking %d due to insufficient funds\n", i);
+            if (verbosity >= 3) fprintf(stderr, "kicking %d due to insufficient funds\n", i);
             game.players[i]->active = -1;
         }
 }
