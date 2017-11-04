@@ -26,7 +26,6 @@
 #include "game.h"
 
 #define BACKLOG 5
-#define PORT "4420"
 
 int sfd;
 
@@ -154,6 +153,14 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     return 1;
 }
 
+/*int msg(packet) {
+    //check if in proper state
+        //if not return failure
+    //add to ring buffer
+    //if failed return return error
+    //return success
+}*/
+
 /*int ack(packet) {
     //if acked msg exists
         //remove acked msg from buffer
@@ -165,8 +172,6 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
 //need to deal with when im in the bet state and have only the one client
 static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     fprintf(stderr, "recieved quit\n");
-    //if incorrect length
-        //still let quit ignore
 
     //get player and check they exist
     int p = get_player_sock(recv_store);
@@ -205,47 +210,30 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
     return 1;
 }
 
-/*int msg(packet) {
-    //check if in proper state
-        //if not return failure
-    //add to ring buffer
-    //if failed return return error
-    //return success
-}*/
-
 static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     fprintf(stderr, "recived hit\n");
-    //check length
-    if (len != HIT_LEN) {
-        fprintf(stderr, "send error HIT_LEN%d\n", len);
-        send_error(ERROR_OP_GEN, &recv_store, "");
-        return -1;
-    }
 
-    //check state
-    if (game.state != STATE_PLAY) {
-        fprintf(stderr, "incorrect state not play\n");
-        send_error(ERROR_OP_GEN, &recv_store, "");
-        return -1;
-    }
-
-    //get player
-    int p = get_player_sock(recv_store);
-    if (p == -1) {// check if player is in the game
-        fprintf(stderr, "stand from player not in game\n");
-        return -1;
-    }
-
-    //if player not active ignore
-    if (game.players[p]->active != 1) {
-        fprintf(stderr, "stand from non active player\n");
-        return -1;
-    }
-
-    //check if asking for that player TODO could remove, probably shouldn't
-    if (p != game.cur_player) {
-        fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
-        return -1;
+    int p = check_packet(packet, len, recv_store, HIT_LEN, STATE_PLAY);
+    switch (p) {
+        case P_CHECK_LEN:
+            fprintf(stderr, "send error HIT_LEN%d\n", len);
+            send_error(ERROR_OP_GEN, &recv_store, "");
+            return -1;
+        case P_CHECK_STATE:
+            fprintf(stderr, "incorrect state not play\n");
+            send_error(ERROR_OP_GEN, &recv_store, "");
+            return -1;
+        case P_CHECK_DNE:
+            fprintf(stderr, "stand from player not in game\n");
+            return -1;
+        case P_CHECK_N_ACTIVE:
+            fprintf(stderr, "stand from non active player\n");
+            return -1;
+        case P_CHECK_N_CUR:
+            fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
+            return -1;
+        default:
+            break;
     }
 
     //make hit play
@@ -267,36 +255,29 @@ static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 
 static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     fprintf(stderr, "recieved stand\n");
-    //check length
-    if (len != STAND_LEN) {
-        fprintf(stderr, "send error STAND_LEN%d\n", len);
-        send_error(ERROR_OP_GEN, &recv_store, "");
-        return -1;
-    }
 
-    //check state
-    if (game.state != STATE_PLAY) {
-        fprintf(stderr, "incorrect state not play\n");
-        send_error(ERROR_OP_GEN, &recv_store, "");
-        return -1;
-    }
+    int p = check_packet(packet, len, recv_store, STAND_LEN, STATE_PLAY);
 
-    //get player
-    int p = get_player_sock(recv_store);
-    if (p == -1) {// check if player is in the game
-        fprintf(stderr, "stand from player not in game\n");
-        return -1;
-    }
-
-    //player not active ignore
-    if (game.players[p]->active != 1) {
-        fprintf(stderr, "stand from non active player\n");
-        return -1;
-    }
-    //check if asking for that players play TODO could remove??? may not want to
-    if (p != game.cur_player) {
-        fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
-        return -1;
+    switch (p) {
+        case P_CHECK_LEN:
+            fprintf(stderr, "send error STAND_LEN%d\n", len);
+            send_error(ERROR_OP_GEN, &recv_store, "");
+            return -1;
+        case P_CHECK_STATE:
+            fprintf(stderr, "incorrect state not play\n");
+            send_error(ERROR_OP_GEN, &recv_store, "");
+            return -1;
+        case P_CHECK_DNE:
+            fprintf(stderr, "stand from player not in game\n");
+            return -1;
+        case P_CHECK_N_ACTIVE:
+            fprintf(stderr, "stand from non active player\n");
+            return -1;
+        case P_CHECK_N_CUR:
+            fprintf(stderr, "stand from non current player:%d\n", game.cur_player);
+            return -1;
+        default:
+            break;
     }
 
     //set stand by updating current player
@@ -315,42 +296,35 @@ static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store
 
 static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     fprintf(stderr, "recieved bet\n");
-    //check packet length
-    if (len != BET_LEN) {
-        fprintf(stderr, "send error BET_LEN%d\n", len);
-        send_error(ERROR_OP_GEN, &recv_store, "");
-        return -1;
-    }
 
-    //check if in proper state
-    if (game.state != STATE_BET) {
-        fprintf(stderr, "incorrect state not bet\n");
-        //send error
-        send_error(ERROR_OP_GEN, &recv_store, "");
-        //if not return failure
-        return -1;
-    }
-    //get player
-    int p = get_player_sock(recv_store);
-    if (p == -1) { //player not in game
-        fprintf(stderr, "bet from player not in game\n");
-        return -1;
-    }
-    //if player not active ignore
-    if (game.players[p]->active != 1) {
-        fprintf(stderr, "bet from non active player\n");
-        return -1;
+    int p = check_packet(packet, len, recv_store, BET_LEN, STATE_BET);
+    switch (p) {
+        case P_CHECK_LEN:
+            fprintf(stderr, "send error BET_LEN%d\n", len);
+            send_error(ERROR_OP_GEN, &recv_store, "");
+            return -1;
+        case P_CHECK_STATE:
+            fprintf(stderr, "incorrect state not bet\n");
+            send_error(ERROR_OP_GEN, &recv_store, "");
+            return -1;
+        case P_CHECK_DNE:
+            fprintf(stderr, "bet from player not in game\n");
+            return -1;
+        case P_CHECK_N_ACTIVE:
+            fprintf(stderr, "bet from non active player\n");
+            return -1;
+        case P_CHECK_N_CUR:
+            fprintf(stderr, "bet from player non current player:%d\n", game.cur_player);
+            return -1;
+        default:
+            break;
     }
     //check if player already bet
     if (game.players[p]->bet != 0) {
         fprintf(stderr, "bet from player who already bet\n");
         return -1;
     }
-    //check if asking for that players bet TODO: may want to remove
-    if (p != game.cur_player) {
-        fprintf(stderr, "bet from player non current player:%d\n", game.cur_player);
-        return -1;
-    }
+
     //get bet
     uint32_t bet = get_bet(packet);
     //check if bet is valid and they have enough money
@@ -536,8 +510,12 @@ static void start_new_round() {
 }
 
 static void check_timers() {
-    if(check_kick()) {
-        send_error(ERROR_OP_TIME, &game.players[game.cur_player]->sock, "");
+    //if there is a current player and the current player is not null
+    if (game.cur_player != -1 && game.players[game.cur_player] != NULL) {
+        struct sockaddr_storage cur_sock = game.players[game.cur_player]->sock;
+        if(check_kick()) {
+            send_error(ERROR_OP_TIME, &cur_sock, "");
+        }
     }
     //check resend
     if (check_resend_timer() && game.state != STATE_IDLE) {
@@ -556,7 +534,18 @@ static void check_timers() {
                 game.finish_resend = 0;
 
                 kick_bankrupt();
-                remove_kicked();
+                //remove_kicked();
+                // SHOULD I DO THIS
+                for (int i = 0; i < game.max_players; i++) {
+                    if (game.players[i] != NULL && game.players[i]->active == -1) {
+                        fprintf(stderr, "deleting kicked player:%d\n", i);
+                        //send error message
+                        send_error(ERROR_OP_MONEY, &game.players[i]->sock, "");//sends out redundant and incorrect error messages
+                        //delete
+                        delete_player(i);
+                    }
+                }
+
                 reset_game();
                 if (num_players() != 0) {
                     start_new_round();

@@ -120,3 +120,30 @@ uint8_t get_opcode(uint8_t *packet) {
 char *get_connect_nick(uint8_t *packet) {
     return (char *) (packet + CONNECT_NICK_OFF);
 }
+
+//return from player id if correct else -1 through -4 for the error it caught
+/*-1 len error, -2 state error, -3 player does not exist, -4 player in not active, -5 not current player*/
+int check_packet(uint8_t *packet, int len, struct sockaddr_storage recv_store, int e_len, game_state e_state) {
+    //check length
+    if (len != e_len)
+        return P_CHECK_LEN;
+
+    //check state
+    if (game.state != e_state)
+        return P_CHECK_STATE;
+
+    //get player
+    int p = get_player_sock(recv_store);
+    if (p == -1)
+        return P_CHECK_DNE;
+
+    //check if player is active
+    if (game.players[p]->active != 1)
+        return P_CHECK_N_ACTIVE;
+
+    //if current player
+    if (p != game.cur_player)
+        return P_CHECK_N_CUR;
+
+    return p;
+}
