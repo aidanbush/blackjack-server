@@ -80,8 +80,9 @@ int main(int argc, char **argv) {
                 break;
             case 'p':
                 opt = atoi(optarg);
-                if (opt != 0)
-                    snprintf(rules.port, PORT_LEN - 1, "%ld", opt);
+                if (opt != 0) {
+                    snprintf(rules.port, PORT_LEN, "%ld", opt);
+                }
                 else
                     inval = 1;
                 break;
