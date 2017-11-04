@@ -741,12 +741,12 @@ int check_kick() {
             game.state = STATE_IDLE;
         }
     } else {
-        kick_player(game.cur_player);//kick
+        kick_player(game.cur_player);//kick TODO fix currently broken
+        //set next player
+        next_player(game.cur_player);
         return 1;
     }
 
-    //set next player
-    next_player(game.cur_player);
     //set timer
     set_timer();
     return 0;

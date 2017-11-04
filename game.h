@@ -19,7 +19,7 @@
 #define MAX_NUM_CARDS   21
 #define DEFAULT_BET     1
 #define DEFAULT_START   100
-#define DEFAULT_TIME    10
+#define DEFAULT_TIME    15
 #define DEFAULT_DECKS   2
 
 #define PLAYER_NAME_LEN 12
