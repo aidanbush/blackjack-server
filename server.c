@@ -651,7 +651,7 @@ void server() {
         }
 
         if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
-            if (verbosity >= 3) fprintf(stderr, "play round start initializing first player%d\n");
+            if (verbosity >= 3) fprintf(stderr, "play round start initializing first player\n");
             next_player(game.cur_player);
             set_timer();
             send_request();
