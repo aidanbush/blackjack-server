@@ -525,6 +525,17 @@ static void check_timers() {
         struct sockaddr_storage cur_sock = game.players[game.cur_player]->sock;
         if(check_kick()) {
             send_error(ERROR_OP_TIME, &cur_sock, "");
+            //if i just kicked the last player update the state
+            if (game.cur_player == -1) {
+                if (game.state == STATE_PLAY) {
+                    if (verbosity >= 1) fprintf(stderr, "state now STATE_FINISH, last player in play round timed out\n");
+                    game.state = STATE_FINISH;
+                }
+                if (game.state == STATE_BET) {
+                    if (verbosity >= 1) fprintf(stderr, "state now STATE_PLAY, last player in bet round timed out\n");
+                    game.state = STATE_PLAY;
+                }
+            }
         }
     }
     //check resend
@@ -542,13 +553,12 @@ static void check_timers() {
                 game.finish_resend = 0;
 
                 kick_bankrupt();
-                //remove_kicked();
-                // SHOULD I DO THIS
                 for (int i = 0; i < game.max_players; i++) {
                     if (game.players[i] != NULL && game.players[i]->active == -1) {
                         if (verbosity >= 1) fprintf(stderr, "deleting kicked player:%d\n", i);
-                        //send error message
-                        send_error(ERROR_OP_MONEY, &game.players[i]->sock, "");//sends out redundant and incorrect error messages
+                        //send error message if they are bankrupt
+                        if (game.players[i]->money < rules.min_bet)
+                            send_error(ERROR_OP_MONEY, &game.players[i]->sock, "");
                         //delete
                         delete_player(i);
                     }
@@ -558,9 +568,7 @@ static void check_timers() {
                 if (num_players() != 0) {
                     start_new_round();
                 }
-            } else {//else resend the end of round
-                //increment counter
-                send_request();
+            } else {
                 game.finish_resend++;
             }
         }
@@ -651,12 +659,13 @@ void server() {
                 break;
         }
 
+end_of_checks:
         if (game.cur_player == -1 && game.state == STATE_PLAY) {//update for play state
             if (verbosity >= 3) fprintf(stderr, "play round start initializing first player\n");
             next_player(game.cur_player);
             set_timer();
             send_request();
-        } else if (game.state == STATE_FINISH) {//finished state and first time in it -- use game.finish_resend
+        } else if (game.state == STATE_FINISH && game.finish_resend == 0) {//finished state and first time in it -- use game.finish_resend
             if (verbosity >= 3) fprintf(stderr, "final state start initializing end of game logic\n");
             //make dealers moves
             dealer_play();
@@ -665,7 +674,6 @@ void server() {
             send_request();
             game.finish_resend++;
         }
-end_of_checks:
         //if i need to start the round from idle
         if (game.cur_player == -1 && game.state == STATE_IDLE && num_players() != 0) {
             start_new_round();//set players to be active

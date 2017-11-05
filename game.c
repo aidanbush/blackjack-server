@@ -71,6 +71,7 @@ int delete_player(int i) {
     int add = add_player_to_list(p->nick, p->money);
     free_player(p);
     game.players[i] = NULL;
+    game.num_players--;
     return add;
 }
 
@@ -736,18 +737,19 @@ int check_kick() {
                 && game.players[game.cur_player]->bet == 0)) {
         delete_player(game.cur_player);//delete
         if (num_players() == 0) {
+            if (verbosity >= 1) fprintf(stderr, "state now STATE_IDLE, last player deleted\n");
             game.state = STATE_IDLE;
         }
     } else {
         kick_player(game.cur_player);//kick TODO fix currently broken
-        //set next player
-        next_player(game.cur_player);
-        return 1;
     }
 
     //set timer
     set_timer();
-    return 0;
+    //set next player
+    next_player(game.cur_player);
+    //return that someone was kicked or deleted
+    return 1;
 }
 
 void set_resend_timer() {

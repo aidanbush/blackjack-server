@@ -3,7 +3,8 @@
  * Course: CMPT 361
  * Date: Oct 23, 17
  * File: packet.c
- * Description:
+ * Description: deals with creating, getting information from and testing
+ *  packets.
  */
 
 /* standard libraries */
@@ -38,9 +39,10 @@
 
 #define CONNECT_NICK_OFF 1
 
+/* adds the player state information to a given packet */
 static void packet_players(uint8_t *packet) {
     int p_off;
-    //for each player
+    // for each player
     for (int i = 0; i < (MAX_PLAYERS); i++) {
         if (game.players[i] == NULL)
             continue;
@@ -55,17 +57,18 @@ static void packet_players(uint8_t *packet) {
         // add player cards
         player_s *player = game.players[i];
         for (int j = 0; j < (MAX_NUM_CARDS) && player->cards[j] != 0; j++)
-            // dont have to convert since both are uint8_t
             packet[p_off + (OFF_PLAYER_CARDS) + j] = player->cards[j];
     }
 }
 
+/* adds the dealers cards to the given packet */
 static void dealer_cards(uint8_t *packet) {
     // for all shown cards show them set them
     for (int i = 0; i < game.d_shown_cards && i < (MAX_NUM_CARDS); i++)
         packet[OFF_D_CARDS + i] = game.d_cards[i];
 }
 
+/* creates a packet for the given player and opcode */
 static uint8_t *create_packet(uint8_t player, uint8_t opcode) {
     uint8_t *packet = malloc(sizeof(uint8_t) * (STATUS_LEN));
     if (packet == NULL)
@@ -91,16 +94,18 @@ static uint8_t *create_packet(uint8_t player, uint8_t opcode) {
     // dealer cards
     dealer_cards(packet);
 
-    // for each player
+    // player information
     packet_players(packet);
 
     return packet;
 }
 
+/* creates and returns the packet for the current state and given player */
 uint8_t *create_status_packet(uint8_t player) {
     return create_packet(player, (OPCODE_STATUS));
 }
 
+/* prints the name from a packet, must be given the starting point */
 static void print_packet_name(uint8_t *packet, int start) {
     printf("pn:");
     for (int i = 0; i < PLAYER_NAME_LEN; i++)
@@ -108,6 +113,7 @@ static void print_packet_name(uint8_t *packet, int start) {
     printf(" ");
 }
 
+/* prints the cards from a packet, must be given the starting point */
 static void print_cards(uint8_t *packet, int start) {
     printf("dc");
     for (int i = 0; i < (MAX_NUM_CARDS); i++) {
@@ -116,87 +122,98 @@ static void print_cards(uint8_t *packet, int start) {
     printf("\n");
 }
 
+/* prints off all the players for a given player*/
 static void print_packet_players(uint8_t *packet) {
     int p_off;
-    //for all players
+    // for all players
     for (int i = 0; i < (MAX_PLAYERS); i++) {
         p_off = (OFF_PLAYER_START) + (OFF_PLAYER_LEN) * i;
-        //print name
+        // print name
         print_packet_name(packet, p_off);
-        //print bank
+        // print bank
         printf("bn:%4x", *(uint32_t *)(packet + p_off + OFF_PLAYER_BANK));
-        //print bet
+        // print bet
         printf("bt:%4x\n", *(uint32_t *)(packet + p_off + OFF_PLAYER_BET));
-        //print cards
+        // print cards
         print_cards(packet, p_off + OFF_PLAYER_CARDS);
     }
 }
 
+/* prints out the given packet */
 void print_packet(uint8_t *packet) {
-    //opcode
+    // opcode
     printf("op:%1x ", *packet);
-    //responce args
+    // responce args
     printf("ra:%4x ", *(uint32_t *)(packet + 1));
-    //seq_num
+    // seq_num
     printf("sq:%2x ", *(uint16_t *)(packet + OFF_SEQ_NUM));
-    //min bet
+    // min bet
     printf("mb:%4x ", *(uint32_t *)(packet + OFF_MIN_BET));
-    //active player
+    // active player
     printf("ap:%1x\n", *(packet + OFF_PLAYER));
-    //dealer cards
+    // dealer cards
     print_cards(packet, (OFF_D_CARDS));
-    //print players
+    // print players
     print_packet_players(packet);
 }
 
-int validate_packet(uint8_t *packet_1) {
-    //generate packet
+/* compairs the given packet to what the server is currently expecting*/
+static int validate_packet(uint8_t *packet_1) {
+    // generate packet
     uint8_t *packet_2 = create_status_packet(game.cur_player + 1);
     int cmp = memcmp(packet_1 + (VALIDATE_OFF), packet_2 + (VALIDATE_OFF), (VALIDATE_LEN));
     free(packet_2);
     return cmp;
 }
 
+/* returns the bet from a given packet, or returns 0 if the packet is NULL */
 uint32_t get_bet(uint8_t *packet) {
     if (packet == NULL)
         return 0;
     return (uint32_t) ntohl(*((uint32_t*) (packet + 1)));
 }
 
+/* returns the opcode from a given packet, or returns UINT8_MAX if the packet is
+ * NULL */
 uint8_t get_opcode(uint8_t *packet) {
     if (packet == NULL)
         return UINT8_MAX;
     return *packet;
 }
 
+/* returns the start of the character name string for a given packet, or returns
+ * NULL if the packet is NULL */
 char *get_connect_nick(uint8_t *packet) {
+    if (packet == NULL)
+        return NULL;
     return (char *) (packet + CONNECT_NICK_OFF);
 }
 
-//return from player id if correct else -1 through -4 for the error it caught
-/*-1 len error, -2 state error, -3 player does not exist, -4 player in not active, -5 not current player*/
+/* tests the given packet and returns the a failing code or the player id for
+ *  who send the packet*/
 int check_packet(uint8_t *packet, int len, struct sockaddr_storage recv_store, int e_len, game_state e_state) {
-    //check length
+    // check length
     if (len != e_len)
         return P_CHECK_LEN;
 
-    //check state
+    // check state
     if (game.state != e_state)
         return P_CHECK_STATE;
 
-    //get player
+    // get player
     int p = get_player_sock(recv_store);
     if (p == -1)
         return P_CHECK_DNE;
 
-    //check if player is active
+    // check if player is active
     if (game.players[p]->active != 1)
         return P_CHECK_N_ACTIVE;
 
-    //if current player
+    // if current player
     if (p != game.cur_player)
         return P_CHECK_N_CUR;
 
+    // if the packet is what was expected
     if (validate_packet(packet) != 0)
         return P_CHECK_INVAL;
 

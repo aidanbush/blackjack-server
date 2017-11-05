@@ -3,7 +3,8 @@
  * Course: CMPT 361
  * Date: Oct 25, 17
  * File: packet.h
- * Description:
+ * Description: deals with creating, getting infomation from, and testing
+ *  packets.
  */
 
 #ifndef PACKET_H
@@ -11,7 +12,7 @@
 
 #include "game.h"
 
-//opcodes
+// opcodes
 #define OPCODE_STATUS   0
 #define OPCODE_CONNECT  1
 #define OPCODE_BET      2
@@ -40,6 +41,7 @@
 #define ERROR_LEN       142
 #define MESSAGE_LEN     5
 
+// packet checking responce codes
 #define P_CHECK_LEN         -1
 #define P_CHECK_STATE       -2
 #define P_CHECK_DNE         -3
@@ -51,20 +53,24 @@
 
 #define ERROR_MSG_LEN   (ERROR_LEN) - 2
 
+/* creates the packet for the given active player, and uses the game state data */
 uint8_t *create_status_packet(uint8_t player);
 
-int validate_packet(uint8_t *packet_1);
-
+/* retrieves the bet from a packet */
 uint32_t get_bet(uint8_t *packet);
 
+/* retrieves the opcode from a packet */
 uint8_t get_opcode(uint8_t *packet);
 
+/* retrieves the nickname from a connect packet */
 char *get_connect_nick(uint8_t *packet);
 
+/* prints out all of a packets bytes */
 void print_packet(uint8_t *packet);
 
-//return from player id if correct else -1 through -4 for the error it caught
-/*-1 len error, -2 state error, -3 player does not exist, -4 player in not active, -5 not current player*/
+/* tests to see if a packet is what was expected
+ * returns the player id for the player that send it or one of the P_CHECK
+ * return values if it failed a test */
 int check_packet(uint8_t *packet, int len, struct sockaddr_storage recv_store, int e_len, game_state e_state);
 
 #endif /* PACKET_H */
