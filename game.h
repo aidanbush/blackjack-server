@@ -3,7 +3,8 @@
  * Course: CMPT 361
  * Date: Oct. 19, 17
  * File: game.h
- * Description: main game logic
+ * Description: the main game logic, also deals the the persistant userdata,
+ *  the connected players, and timers
  */
 
 #ifndef GAME_H
