@@ -412,7 +412,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
 
     //if in idle state set them to be active or they are after the current betting player
     if (game.state == STATE_IDLE || (game.state == STATE_BET && game.cur_player < pos)) {//currently redundant
-        game.players[pos]->active = 1;
+        game.players[pos]->active = PLAYER_A_ACTIVE;
     }
 
     if (game.cur_player == -1 && game.state == STATE_IDLE) {//if the current player is -1 and the state is idle
@@ -554,7 +554,7 @@ static void check_timers() {
 
                 kick_bankrupt();
                 for (int i = 0; i < game.max_players; i++) {
-                    if (game.players[i] != NULL && game.players[i]->active == -1) {
+                    if (game.players[i] != NULL && game.players[i]->active == PLAYER_A_KICKED) {
                         if (verbosity >= 1) fprintf(stderr, "deleting kicked player:%d\n", i);
                         //send error message if they are bankrupt
                         if (game.players[i]->money < rules.min_bet)
