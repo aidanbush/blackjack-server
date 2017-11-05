@@ -23,9 +23,9 @@
 
 #define START_USER_LIST_LEN 8
 
-#define RESEND_DELAY    1// change to variable and getopt option
+#define RESEND_DELAY    1// in seconds
 
-//should be static
+/* initializes a new player using the provided nickname, staring money, and socket */
 static player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store) {
     player_s *player = malloc(sizeof(player_s));
     if (player == NULL)
@@ -55,13 +55,14 @@ static player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_s
     return player;
 }
 
+/* frees a given player struct */
 static void free_player(player_s *p) {
     free(p->nick);
     free(p);
 }
 
-// moves player into userlist and then frees them
-// if returns response code from add_player_to_list
+/* moves player into userlist and then frees them if it failed to add to the
+ *  userlist it forwards the response code from add_player_to_list*/
 int delete_player(int i) {
     player_s *p = game.players[i];
     if (p == NULL) {
@@ -75,6 +76,7 @@ int delete_player(int i) {
     return add;
 }
 
+/* initializes the game struct */
 void init_game() {
     for (int i = 0; i < (MAX_NUM_CARDS); i++)
         game.d_cards[i] = 0;
@@ -100,6 +102,7 @@ void init_game() {
     set_resend_timer();
 }
 
+/* frees the game struct */
 void free_game() {
     // free all players
     for (int i = 0; i < game.max_players; i++) {
@@ -114,7 +117,11 @@ void free_game() {
         game.num_players = 0;
 }
 
-//returns index if added otherwise -2 if nick already taken, -1 if there was an error
+// PLAYER_FUNCTIONS
+
+/* add a new player to the game, using the given information
+ *  returns index if added otherwise -2 if nick already taken, -1 if there was
+ *  someother error*/
 int add_player(char *player_name, struct sockaddr_storage store) {
     //check if player with same nick already there
     if (get_player(player_name) != -1) {
@@ -122,7 +129,7 @@ int add_player(char *player_name, struct sockaddr_storage store) {
     }
 
     int64_t test_money;
-    uint32_t money;//test -----------------------------------------
+    uint32_t money;
     if ((test_money = get_user_money(player_name)) == -1)
         money = rules.start;
     else
@@ -148,13 +155,15 @@ int add_player(char *player_name, struct sockaddr_storage store) {
     return -1;
 }
 
-// int64_t could introduce bugs could switch with
+/* returns the players money for the given player index, or -1 if they don't
+ *  exist*/
 int64_t get_player_money(int i) {
     if (game.players[i] == NULL)
         return -1;
     return game.players[i]->money;
 }
 
+/* gets the player index for the given nickname, otherwise returns -1 */
 int get_player(char *nick) {
     for (int i = 0; i < game.max_players; i++)
         if (game.players[i] != NULL)
@@ -163,12 +172,14 @@ int get_player(char *nick) {
     return -1;
 }
 
+/* sets the given players active status to kicked */
 void kick_player(int p) {
     if (game.players[p] == NULL)
         return;
     game.players[p]->active = PLAYER_A_KICKED;
 }
 
+/* tests if a nickname is valid returning -1 if its not */
 int valid_nick(char *nick) {
     //loop through everything
     for (int i = 0; i < PLAYER_NAME_LEN && nick[i] != '\0'; i++) {
@@ -178,21 +189,22 @@ int valid_nick(char *nick) {
     return 1;
 }
 
-int sock_cmp(struct sockaddr_storage fst, struct sockaddr_storage snd) {
+/* compaires two sockaddr_storage structs and returns 0 if they are equal */
+static int sock_cmp(struct sockaddr_storage fst, struct sockaddr_storage snd) {
     return memcmp(&fst, &snd, sizeof(struct sockaddr_storage));
 }
 
+/* returns a players index for the given socket, returns -1 if they dont exist */
 int get_player_sock(struct sockaddr_storage store) {
-    //for all spots
+    //for all players
     for (int  i = 0; i < game.max_players; i++)
-        //if player exists
         if (game.players[i] != NULL)
-            //if sock matches
             if (sock_cmp(game.players[i]->sock, store) == 0)
                 return i;
     return -1;
 }
 
+/* returns the number of players in the game, regardless of their active value */
 int num_players() {
     int c = 0;
     for (int i = 0; i < game.max_players; i++)
@@ -201,8 +213,9 @@ int num_players() {
     return c;
 }
 
-//return next player id
-void next_player(int cur) {// refactor to deal with game.cur_player
+/* returns the player index of the active player after the given index
+ * returns -1 if they are the last in the list */
+void next_player(int cur) {
     if (cur >= game.max_players){
         game.cur_player =  -1;
         return;
@@ -219,6 +232,7 @@ void next_player(int cur) {// refactor to deal with game.cur_player
     game.cur_player = -1;
 }
 
+/* sets all players to active */
 void set_players_active() {
     //for all players
     for (int i = 0; i < game.max_players; i++)
@@ -229,6 +243,7 @@ void set_players_active() {
 
 // DECK FUNCTIONS
 
+/* shuffles the deck and resets the current card index */
 static void shuffle_cards() {
     srand(time(NULL));// seed random
     int tmp, r;
@@ -241,7 +256,7 @@ static void shuffle_cards() {
     }
 }
 
-// returns number of cards added to the deck
+/* initializes the deck and returns number of cards added to the deck */
 int init_deck() {
     game.deck.cards = malloc(sizeof(uint8_t) * 52 * rules.decks);
     if (game.deck.cards == NULL)
@@ -259,19 +274,21 @@ int init_deck() {
     return game.deck.num_cards;
 }
 
+/* frees the deck and reset its values */
 void free_deck() {
-    //free deck
     free(game.deck.cards);
-    //set null
+    game.deck.cur_card = 0;
+    game.deck.num_cards = 0;
     game.deck.cards = NULL;
 }
 
-//grabs one card from the deck and returns it
+/* grabs one card from the deck and returns it */
 static int get_card() {
     return game.deck.cards[game.deck.cur_card++];
 }
 
-//deals two cards to each player and the dealer
+/* deals the first two cards to each player and the dealer, and sets their
+ *  number of cards */
 void deal_cards() {
     //dealer
     game.d_cards[0] = get_card();
@@ -289,6 +306,7 @@ void deal_cards() {
     }
 }
 
+/* returns the cards value for a given card */
 static uint8_t card_value(uint8_t card) {
     uint8_t value = ((card - 1) % 13) + 1;
     if (value > 10)//if face card
@@ -298,7 +316,7 @@ static uint8_t card_value(uint8_t card) {
     return value;
 }
 
-//retunr 1 if the given player has a blackjack
+/* returns 1 if the given player has a blackjack otherwise -1 */
 static int blackjack(int p) {
     if (game.players[p] == NULL) {
         return -1;
@@ -313,13 +331,14 @@ static int blackjack(int p) {
     return -1;
 }
 
+/* returns 1 if the dealer has a blackjack, otherwise -1*/
 static int d_blackjack() {
     if (card_value(game.d_cards[0]) + card_value(game.d_cards[1]) == 21)
         return 1;
     return -1;
 }
 
-//-1 if player does not exist
+/* returns the given players hand value, or -1 on error */
 static int player_hand_value(int p) {
     if (game.players[p] == NULL) {
         return -1;
@@ -342,8 +361,7 @@ static int player_hand_value(int p) {
     return value;
 }
 
-//return -1 if bust, 1 otherwise
-//if the player is already busted returns -1
+/* deals a card to the given player and returns -1 on bust otherwise -1*/
 int hit(int p) {
     //if player exists
     if (game.players[p] == NULL) {
@@ -364,7 +382,7 @@ int hit(int p) {
     return 1;
 }
 
-//soft 17
+/* returns the dealers hand value for playing on a soft 17 */
 static int d_hand_value() {
     int h_ace = 0, value = 0;
     uint8_t card;
@@ -384,7 +402,8 @@ static int d_hand_value() {
     return value;
 }
 
-//soft 17
+/* plays out the dealers turn having them hit on a soft 17 returning -1 if they
+ *  bust otherwise 1 */
 int dealer_play() {
     int value = 0;
     //get current value
@@ -407,7 +426,7 @@ int dealer_play() {
 
 // USERLIST FUNCTIONS
 
-// deal with being called multiple times
+/* initializes the userlist */
 int init_userlist() {
     userlist.users = calloc(START_USER_LIST_LEN, sizeof(user_s));
     if (userlist.users == NULL)
@@ -418,11 +437,13 @@ int init_userlist() {
     return 1;
 }
 
+/* frees a given user */
 static void free_user(user_s *user) {
     free(user->name);
     free(user);
 }
 
+/* frees the userlist */
 void free_userlist() {
     //free all users
     for (int i = 0; i < userlist.max_users; i++)
@@ -436,7 +457,7 @@ void free_userlist() {
     userlist.users = NULL;
 }
 
-// TODO replace with real hash function
+/* simple hash function for the userlist */
 static int hash(char *str) {
     int h = 0;
     for (int i = 0; i < strlen(str); i++) {
@@ -445,6 +466,8 @@ static int hash(char *str) {
     return h;
 }
 
+/* hash and add a user to the userlist returning the position they were hashed
+ *  to*/
 static int hash_user(user_s *user) {
     // if no room
     if (userlist.cur_users >= userlist.max_users)
@@ -459,6 +482,7 @@ static int hash_user(user_s *user) {
     return h;
 }
 
+/* resizes the userlist hashtable */
 static int resize_userlist() {
     int old_size = userlist.max_users;
     int new_size = old_size * 2;
@@ -483,6 +507,8 @@ static int resize_userlist() {
     return 1;
 }
 
+/* returns the users money from the userlist using a given nickname, otherwise
+ *  returns -1 on error */
 uint64_t get_user_money(char *nick) {
     int i;
     if ((i = get_user(nick)) == -1)
@@ -494,14 +520,16 @@ uint64_t get_user_money(char *nick) {
     return userlist.users[i]->money;
 }
 
-int get_user(char *name) {
+/* retieves the users position in the hashtable for the given nickname */
+int get_user(char *nick) {
     for (int i = 0; i < userlist.max_users; i++)
        if (userlist.users[i] != NULL)
-            if (strncmp(name, userlist.users[i]->name, PLAYER_NAME_LEN) == 0)
+            if (strncmp(nick, userlist.users[i]->name, PLAYER_NAME_LEN) == 0)
                 return i;
     return -1; // not found
 }
 
+/* adds the given player to the userlist and sets their money accordingly */
 int add_player_to_list(char *nick, uint32_t money) {
     // if no space and must be reinited
     if (userlist.max_users == 0)
@@ -545,6 +573,7 @@ int add_player_to_list(char *nick, uint32_t money) {
 
 // ROUND COMPLETION
 
+/* add the given players winnings for a blackjack win */
 static void player_blackjack(int p) {
     //if player does not exist
     if (game.players[p] == NULL)
@@ -557,6 +586,7 @@ static void player_blackjack(int p) {
     game.players[p]->bet = 0;// reset bet
 }
 
+/* add the given players winnings for a regular win */
 static void player_win(int p) {
     //if player does not exist
     if (game.players[p] == NULL)
@@ -569,11 +599,12 @@ static void player_win(int p) {
     game.players[p]->bet = 0;// reset bet
 }
 
+/* resets the players bet for a tie */
 static void player_tie(int p) {
-    game.players[p]->bet = 0;//reset bet
+    game.players[p]->bet = 0;
 }
 
-//lose bet
+/* takes away the players money for a loss */
 static void player_lost(int p) {
     //if player does not exist
     if (game.players[p] == NULL)
@@ -586,7 +617,7 @@ static void player_lost(int p) {
     game.players[p]->bet = 0;// reset bet
 }
 
-//calculates who won and how much they win
+/* calculates the end of the round and disributes winnings/losses */
 void round_end() {
     //get dealers hand
     int d_value = d_hand_value();
@@ -630,6 +661,7 @@ void round_end() {
     }
 }
 
+/* set all bankrupt players to kicked */
 void kick_bankrupt() {
     for (int i = 0; i < game.max_players; i++)
         if (game.players[i] != NULL && game.players[i]->money < rules.min_bet) {
@@ -638,6 +670,7 @@ void kick_bankrupt() {
         }
 }
 
+/* removed kicked players */
 void remove_kicked() {
     //for all players
     for (int i = 0; i < game.max_players; i++)
@@ -649,6 +682,7 @@ void remove_kicked() {
                 delete_player(i);
 }
 
+/* reset all players bets */
 static void reset_bets() {
     //for all players
     for (int i = 0; i < game.max_players; i++)
@@ -658,6 +692,7 @@ static void reset_bets() {
             game.players[i]->bet = 0;
 }
 
+/* reset the given players cards */
 static void reset_player(int p) {
     if (game.players[p] == NULL)
         return;
@@ -668,6 +703,7 @@ static void reset_player(int p) {
     game.players[p]->num_cards = 0;
 }
 
+/* reset the dealers cards */
 static void reset_dealer() {
     //for cards
     for (int i = 0; i < MAX_NUM_CARDS; i++)
@@ -678,7 +714,7 @@ static void reset_dealer() {
     game.d_shown_cards = 0;
 }
 
-//may be redundant but still a good check
+/* set the number of players, redundant, but will catch errors */
 static void set_num_players() {
     int c = 0;
     for (int i = 0; i < game.max_players; i++)
@@ -687,6 +723,7 @@ static void set_num_players() {
     game.num_players = c;
 }
 
+/* reset the game, including a players, and the dealer does not modify state */
 void reset_game() {
     //reset players cards and num cards
     for (int i = 0; i < game.max_players; i++)
@@ -703,20 +740,20 @@ void reset_game() {
 
 // TIMER
 
-//return different in miliseconds
+/* return different in miliseconds */
 static int time_dif(struct timeval tv1, struct timeval tv2) {
     return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000;
 }
 
-//set/reset time
+/* set the kick timer for the next kick */
 void set_timer() {
     gettimeofday(&game.kick_timer, NULL);
     //update seconds
     game.kick_timer.tv_sec += rules.time;
 }
 
-//check time
-static int check_kick_timer() {//rename
+/* checks the kick timer returning 1 if the time is up */
+static int check_kick_timer() {
     struct timeval tmp;
     gettimeofday(&tmp, NULL);
     if (time_dif(game.kick_timer, tmp) < 0)
@@ -724,6 +761,8 @@ static int check_kick_timer() {//rename
     return 0;
 }
 
+/* checks if the current player needs to be kicked for timout, and kicks them
+ *  if so also updates the state */
 int check_kick() {
     //check if timer is up and the current player is not -1
     if (!(check_kick_timer() && game.cur_player != -1))
@@ -752,11 +791,13 @@ int check_kick() {
     return 1;
 }
 
+/* sets the resend timer */
 void set_resend_timer() {
     gettimeofday(&game.resend_timer, NULL);
     game.resend_timer.tv_sec += RESEND_DELAY;
 }
 
+/* returns 1 if the resend timer is up */
 int check_resend_timer() {
     struct timeval tmp;
     gettimeofday(&tmp, NULL);

@@ -23,6 +23,7 @@
 #define DEFAULT_TIME    15
 #define DEFAULT_DECKS   2
 
+// player active status defines
 #define PLAYER_A_ACTIVE   1
 #define PLAYER_A_INACTIVE 0
 #define PLAYER_A_KICKED   -1
@@ -115,69 +116,111 @@ void init_game();
 /* frees the game struct */
 void free_game();
 
-/********************
- * player functions *
- ********************/
+/********************/
+/* player functions */
+/********************/
 
 /* adds the given player to the game or returns an error */
 int add_player(char *player_name, struct sockaddr_storage store);
 
+/* returns the players money for the given player index, or -1 if they don't
+ *  exist*/
 int64_t get_player_money(int i);
 
+/* gets the player index for the given nickname, otherwise returns -1 */
 int get_player(char *nick);
 
-int get_player_sock(struct sockaddr_storage store);
-
-int num_players();
-
+/* sets the given players active status to kicked */
 void kick_player(int p);
 
+/* tests if a nickname is valid returning -1 if its not */
 int valid_nick(char *nick);
 
+/* returns a players index for the given socket, returns -1 if they dont exist */
+int get_player_sock(struct sockaddr_storage store);
+
+/* returns the number of players in the game, regardless of their active value */
+int num_players();
+
+/* returns the player index of the active player after the given index
+ * returns -1 if they are the last in the list */
 void next_player(int cur);
 
+/* sets all players to active */
 void set_players_active();
 
-// deck functions
+/******************/
+/* deck functions */
+/******************/
+
+/* initializes the deck and returns number of cards added to the deck */
 int init_deck();
 
+/* frees the deck and reset its values */
 void free_deck();
 
+/* deals the first two cards to each player and the dealer, and sets their
+ *  number of cards */
 void deal_cards();
 
+/* deals a card to the given player and returns -1 on bust otherwise -1*/
 int hit(int p);
 
+/* plays out the dealers turn having them hit on a soft 17 returning -1 if they
+ *  bust otherwise 1 */
 int dealer_play();
 
-// userlist funcitons
+/**********************/
+/* userlist funcitons */
+/**********************/
+
+/* initializes the userlist */
 int init_userlist();
 
+/* frees the userlist */
 void free_userlist();
 
+/* returns the users money from the userlist using a given nickname, otherwise
+ *  returns -1 on error */
 uint64_t get_user_money(char *nick);
 
+/* retieves the users position in userlist for the given nickname */
 int get_user(char *nick);
 
+/* adds the given player to the userlist and sets their money accordingly */
 int add_player_to_list(char *nick, uint32_t money);
 
-//round end
+/***********************/
+/* round end functions */
+/***********************/
 
+/* calculates the end of the round and disributes winnings/losses */
 void round_end();
 
+/* set all bankrupt players to kicked */
 void kick_bankrupt();
 
+/* removed kicked players */
 void remove_kicked();
 
+/* reset the game, including a players, and the dealer does not modify state */
 void reset_game();
 
-//timer
+/*******************/
+/* timer functions */
+/*******************/
 
+/* set the kick timer for the next kick */
 void set_timer();
 
+/* checks if the current player needs to be kicked for timout, and kicks them
+ *  if so also updates the state */
 int check_kick();
 
+/* sets the resend timer */
 void set_resend_timer();
 
+/* returns 1 if the resend timer is up */
 int check_resend_timer();
 
 #endif /* GAME_H */
