@@ -19,6 +19,7 @@
 #include "game.h"
 #include "server.h"
 
+// globals for tracking game logic and presistand date
 int verbosity = 0;
 game_rules rules;
 game_s game;
@@ -47,6 +48,7 @@ int main(int argc, char **argv) {
     int c, inval = 0;
     int64_t opt;
 
+    // setup rules with defaults
     rules.decks = DEFAULT_DECKS;
     rules.time = DEFAULT_TIME;
     rules.start = DEFAULT_START;
@@ -61,7 +63,6 @@ int main(int argc, char **argv) {
             case 'h':
                 print_usage(argv[0]);
                 return 0;
-                break;
             case 'd':
                 opt = atoi(optarg);
                 if (opt > 0 && opt <= 10)
@@ -85,9 +86,8 @@ int main(int argc, char **argv) {
                 break;
             case 'p':
                 opt = atoi(optarg);
-                if (opt != 0) {
+                if (opt != 0)
                     snprintf(rules.port, PORT_LEN, "%ld", opt);
-                }
                 else
                     inval = 1;
                 break;
@@ -106,15 +106,17 @@ int main(int argc, char **argv) {
         }
     }
 
+    // if the minimum bet is smaller than the starting money
     if (rules.min_bet > rules.start)
         inval = 1;
 
+    // if any invalid options were given
     if (inval == 1) {
-        //free anything needed
         print_usage(argv[0]);
         return 1;
     }
 
+    // setup game
     init_game();
     init_deck();
     init_userlist();
@@ -122,6 +124,7 @@ int main(int argc, char **argv) {
     // call main loop
     server();
 
+    // teardown game
     free_game();
     free_deck();
     free_userlist();
