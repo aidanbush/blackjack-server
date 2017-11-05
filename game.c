@@ -48,7 +48,7 @@ static player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_s
         player->cards[i] = 0;
     player->money = start_money;
     player->bet = 0;
-    player->active = 0;
+    player->active = PLAYER_A_INACTIVE;
     player->sock = store;
     player->num_cards = 0;
 
@@ -166,7 +166,7 @@ int get_player(char *nick) {
 void kick_player(int p) {
     if (game.players[p] == NULL)
         return;
-    game.players[p]->active = -1;
+    game.players[p]->active = PLAYER_A_KICKED;
 }
 
 int valid_nick(char *nick) {
@@ -212,7 +212,7 @@ void next_player(int cur) {// refactor to deal with game.cur_player
 
     for (int i = cur+1; i < game.max_players; i++)
         if (game.players[i] != NULL)
-            if (game.players[i]->active == 1){//if active
+            if (game.players[i]->active == PLAYER_A_ACTIVE){//if active
                 game.cur_player = i;
                 return;
             }
@@ -224,7 +224,7 @@ void set_players_active() {
     for (int i = 0; i < game.max_players; i++)
         //if not null
         if (game.players[i] != NULL)
-            game.players[i]->active = 1;
+            game.players[i]->active = PLAYER_A_ACTIVE;
 }
 
 // DECK FUNCTIONS
@@ -281,7 +281,7 @@ void deal_cards() {
     //players
     for (int i = 0; i < game.max_players; i++) {
         //if player exists
-        if (game.players[i] != NULL && game.players[i]->active == 1) {//may cause issues if they have bet
+        if (game.players[i] != NULL && game.players[i]->active == PLAYER_A_ACTIVE) {//may cause issues if they have bet
             game.players[i]->cards[0] = get_card();//deal cards
             game.players[i]->cards[1] = get_card();
             game.players[i]->num_cards = 2;
@@ -598,7 +598,7 @@ void round_end() {
     //for every player
     for (int i = 0; i < game.max_players; i++) {
         //if not null
-        if (game.players[i] != NULL && game.players[i]->active != 0) {
+        if (game.players[i] != NULL && game.players[i]->active != PLAYER_A_INACTIVE) {
             p_value = player_hand_value(i);
             if (p_value > 21)// if bust
                 p_value = -1;
@@ -634,7 +634,7 @@ void kick_bankrupt() {
     for (int i = 0; i < game.max_players; i++)
         if (game.players[i] != NULL && game.players[i]->money < rules.min_bet) {
             if (verbosity >= 3) fprintf(stderr, "kicking %d due to insufficient funds\n", i);
-            game.players[i]->active = -1;
+            game.players[i]->active = PLAYER_A_KICKED;
         }
 }
 
@@ -644,7 +644,7 @@ void remove_kicked() {
         //if player != NULL
         if (game.players[i] != NULL)
             //if kicked, delete
-            if (game.players[i]->active == -1)
+            if (game.players[i]->active == PLAYER_A_KICKED)
                 //delete player
                 delete_player(i);
 }

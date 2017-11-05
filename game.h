@@ -9,18 +9,23 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <stdint.h>
+
 #include <sys/socket.h>
 #include <sys/time.h>
 
-#include <stdint.h>
-
 #define MAX_PLAYERS     7
-
 #define MAX_NUM_CARDS   21
+
+// default defines
 #define DEFAULT_BET     1
 #define DEFAULT_START   100
 #define DEFAULT_TIME    15
 #define DEFAULT_DECKS   2
+
+#define PLAYER_A_ACTIVE   1
+#define PLAYER_A_INACTIVE 0
+#define PLAYER_A_KICKED   -1
 
 #define PLAYER_NAME_LEN 12
 
@@ -28,17 +33,21 @@
 
 #define FINISH_SEND_THRESHOLD   3
 
+/* user struct for storing persistand user data */
 typedef struct user_s {
     char *name;
     uint32_t money;
 } user_s;
 
+/* userlist struct that holds persistand user data */
 typedef struct userlist_s {
     user_s **users;
     int cur_users;
     int max_users;
 } userlist_s;
 
+/* game rules struct that holds resend timer delays and other infomation
+ *  regarding the server and player joining */
 typedef struct game_rules {
     int decks;
     int time;
@@ -47,29 +56,33 @@ typedef struct game_rules {
     char port[PORT_LEN];
 } game_rules;
 
+/* player struct holds all infomation for connected players */
 typedef struct player_s {
     char *nick;
     uint32_t money;
     uint32_t bet;
     uint8_t cards[MAX_NUM_CARDS];
     int num_cards;
-    int active; // TODO switch to enum -1 kicked, 0 not active, 1 active
-    struct sockaddr_storage sock;//add players socket info
+    int active; //uses PLAYER_A_ defines
+    struct sockaddr_storage sock;
 } player_s;
 
+/* the deck struct holds the cards */
 typedef struct deck_s {
     uint8_t *cards;
     int cur_card;
     int num_cards;
 } deck_s;
 
-typedef enum {
+/* state enum */
+typedef enum game_state {
     STATE_IDLE,
     STATE_BET,
     STATE_PLAY,
     STATE_FINISH
 } game_state;
 
+/* main game state struct, holds all players, the dealer and state infomation */
 typedef struct game_s {
     deck_s deck;
     uint8_t d_cards[MAX_NUM_CARDS];
@@ -86,19 +99,27 @@ typedef struct game_s {
     struct timeval resend_timer;
 } game_s;
 
+// extern globals
 extern int verbosity;
 
 extern userlist_s userlist;
 extern game_rules rules;
 extern game_s game;
 
+/* deletes a player from the game struct and puts them in the userlist */
 int delete_player(int i);
 
+/* initializes the game struct */
 void init_game();
 
+/* frees the game struct */
 void free_game();
 
-// player functions
+/********************
+ * player functions *
+ ********************/
+
+/* adds the given player to the game or returns an error */
 int add_player(char *player_name, struct sockaddr_storage store);
 
 int64_t get_player_money(int i);

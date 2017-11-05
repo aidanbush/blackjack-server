@@ -206,7 +206,7 @@ int check_packet(uint8_t *packet, int len, struct sockaddr_storage recv_store, i
         return P_CHECK_DNE;
 
     // check if player is active
-    if (game.players[p]->active != 1)
+    if (game.players[p]->active != PLAYER_A_ACTIVE)
         return P_CHECK_N_ACTIVE;
 
     // if current player

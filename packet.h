@@ -53,6 +53,10 @@
 
 #define ERROR_MSG_LEN   (ERROR_LEN) - 2
 
+// globals needed
+extern int verbosity;
+extern game_s game;
+
 /* creates the packet for the given active player, and uses the game state data */
 uint8_t *create_status_packet(uint8_t player);
 
