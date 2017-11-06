@@ -39,7 +39,8 @@
 #define HIT_LEN         (STATUS_LEN)
 #define QUIT_LEN        (STATUS_LEN)
 #define ERROR_LEN       142
-#define MESSAGE_LEN     5
+#define MESSAGE_LEN     165
+#define ACK_LEN         5
 
 // packet checking responce codes
 #define P_CHECK_LEN         -1

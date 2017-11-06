@@ -25,8 +25,13 @@
 #include "server.h"
 #include "packet.h"
 #include "game.h"
+#include "msg.h"
 
 #define BACKLOG 5
+
+
+extern msg_list msg_queue;
+extern msg_ack_list msg_ack_queue;
 
 //server file descriptor
 int sfd;
@@ -162,21 +167,27 @@ static int send_error(uint8_t error_opcode, struct sockaddr_storage *dest, char 
     return 1;
 }
 
-/*int msg(packet) {
-    //check if in proper state
-        //if not return failure
+static int op_msg(uint8_t *packet, int len) {
+    if (len != MESSAGE_LEN)
+        return -1;
     //add to ring buffer
-    //if failed return return error
-    //return success
-}*/
+    add_msg(packet);
+    return 1;
+}
 
-/*int ack(packet) {
-    //if acked msg exists
-        //remove acked msg from buffer
-        //return success
-    //else send error msg
-        //return error
-}*/
+static int op_ack(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
+    if (len != ACK_LEN)
+        return -1;
+
+    //get player id
+    int p = get_player_sock(recv_store);
+    if (p == -1)
+        return -1;
+
+    //else apply ack
+    recive_ack(packet, p);
+    return 1;
+}
 
 /* kicks or removes the player that sent the quit message */
 static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
@@ -535,6 +546,35 @@ static void start_new_round() {
     send_request();
 }
 
+/* NOT TESTED */
+/* sends the msg and msg_pos to all the connected players, unless they have acked it*/
+static void send_msg(int msg_pos) {
+    //for all players
+    for (int i = 0; i < game.max_players; i++)
+        //if not null
+        if (game.players[i] != NULL)
+            //if not acked
+            if (!msg_acked(msg_pos, i))
+                sendto(sfd, msg_queue.msgs[msg_pos], MESSAGE_LEN, 0,
+                        (struct sockaddr *) &game.players[i]->sock,
+                        sizeof(game.players[i]->sock));
+}
+
+/* NOT TESTED */
+/* sends all the messages to all players who have not acked them */
+static void send_msgs() {
+#ifndef _TEST_MSGS//macro to not try to forward messages for testing purposes
+        return;
+#endif /* _TEST_MSGS */
+    if (verbosity >= 4) fprintf(stderr, "sending messages\n");
+    //for all messages
+    for (int i = 0; i < msg_queue.size; i++)
+        //if msg not null
+        if (msg_queue.msgs[i] != NULL)
+            //send msg
+            send_msg(i);
+}
+
 /* checks if the timers are up and deals with them if so */
 static void check_timers() {
     //if there is a current player and the current player is not null
@@ -559,6 +599,9 @@ static void check_timers() {
     //check resend
     if (check_resend_timer() && game.state != STATE_IDLE) {
         if (verbosity >= 4) fprintf(stderr, "resending packet\n");
+
+        send_msgs();
+
         //resend
         send_request();
         //if in final state check if i need to change state
@@ -671,8 +714,10 @@ void server() {
                 op_quit(packet, recv_len, recv_store);
                 break;
             case OPCODE_MESSAGE:
+                op_msg(packet, recv_len);
                 break;
             case OPCODE_ACK:
+                op_ack(packet, recv_len, recv_store);
                 break;
             default:
                 break;

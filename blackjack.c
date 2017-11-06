@@ -18,12 +18,16 @@
 /* project includes */
 #include "game.h"
 #include "server.h"
+#include "msg.h"
 
 // globals for tracking game logic and presistand date
 int verbosity = 0;
 game_rules rules;
 game_s game;
 userlist_s userlist;
+
+extern msg_list msg_queue;
+extern msg_ack_list msg_ack_queue;
 
 /* prints the usage message and returns */
 void print_usage(char *p_name) {
@@ -121,6 +125,8 @@ int main(int argc, char **argv) {
     init_deck();
     init_userlist();
 
+    init_msg_queue();
+
     // call main loop
     server();
 
@@ -128,6 +134,8 @@ int main(int argc, char **argv) {
     free_game();
     free_deck();
     free_userlist();
+
+    free_msg_queue();
 
     return 0;
 }
