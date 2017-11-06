@@ -19,6 +19,7 @@
 #include "game.h"
 #include "server.h"
 #include "msg.h"
+#include "file.h"
 
 // globals for tracking game logic and presistand date
 int verbosity = 0;
@@ -31,7 +32,7 @@ extern msg_ack_list msg_ack_queue;
 
 /* prints the usage message and returns */
 void print_usage(char *p_name) {
-    printf("Usage : %s  [-options]\n"
+    printf("Usage : %s  [-options] [persistant data file]\n"
         "Blackjack server as specified in RFC n + 21\n\n"
         "Options:\n"
         "    -v verbose [use more than once for higher levels]\n"
@@ -51,6 +52,7 @@ void print_usage(char *p_name) {
 int main(int argc, char **argv) {
     int c, inval = 0;
     int64_t opt;
+    char *filename = NULL;
 
     // setup rules with defaults
     rules.decks = DEFAULT_DECKS;
@@ -120,15 +122,26 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    if (optind >= 1) {
+        filename = argv[optind];
+    }
+
     // setup game
     init_game();
     init_deck();
     init_userlist();
 
+    //setup message queue
     init_msg_queue();
+
+    //read from file
+    read_userlist_file(filename);
 
     // call main loop
     server();
+
+    //write to file
+    write_userlist_file(filename);
 
     // teardown game
     free_game();

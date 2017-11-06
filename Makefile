@@ -12,13 +12,15 @@ CFLAGS=-Wall -std=c99 -D_POSIX_C_SOURCE=201112L -pedantic -g -D_TEST_MSGS
 
 all: blackjack
 
+#test program
 test_game: test_game.o game.o packet.o
 
 test_game.o: test_game.c game.h packet.h server.h
 
-blackjack: blackjack.o game.o server.o packet.o msg.o
+#actual program
+blackjack: blackjack.o game.o server.o packet.o msg.o file.o
 
-blackjack.o: blackjack.c game.h server.h msg.h
+blackjack.o: blackjack.c game.h server.h msg.h file.h
 
 game.o: game.c game.h
 
@@ -27,6 +29,8 @@ packet.o: packet.c packet.h game.h
 server.o: server.c server.h game.h packet.h msg.h
 
 msg.o: msg.c msg.h game.h
+
+file.o: file.c file.h game.h
 
 clean:
 	$(RM) blackjack *.o test_game
