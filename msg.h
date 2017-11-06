@@ -26,7 +26,7 @@ typedef struct msg_list {
 
 // list of server seq numbers
 typedef struct msg_ack_list {
-    //multi dimensional array for acks, 0 is recived
+    //multi dimensional array for acks, 0 is received
     uint32_t ack_list[MAX_PLAYERS][MSG_BUF_LEN];
 } msg_ack_list;
 

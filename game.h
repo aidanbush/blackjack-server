@@ -3,7 +3,7 @@
  * Course: CMPT 361
  * Date: Oct. 19, 17
  * File: game.h
- * Description: the main game logic, also deals the the persistant userdata,
+ * Description: the main game logic, also deals with the persistent user data,
  *  the connected players, and timers
  */
 
@@ -35,20 +35,20 @@
 
 #define FINISH_SEND_THRESHOLD   3
 
-/* user struct for storing persistand user data */
+/* user struct for storing persistent user data */
 typedef struct user_s {
     char *name;
     uint32_t money;
 } user_s;
 
-/* userlist struct that holds persistand user data */
+/* userlist struct that holds persistent user data */
 typedef struct userlist_s {
     user_s **users;
     int cur_users;
     int max_users;
 } userlist_s;
 
-/* game rules struct that holds resend timer delays and other infomation
+/* game rules struct that holds resend timer delays and other information
  *  regarding the server and player joining */
 typedef struct game_rules {
     int decks;
@@ -58,7 +58,7 @@ typedef struct game_rules {
     char port[PORT_LEN];
 } game_rules;
 
-/* player struct holds all infomation for connected players */
+/* player struct holds all information for connected players */
 typedef struct player_s {
     char *nick;
     uint32_t money;
@@ -84,7 +84,7 @@ typedef enum game_state {
     STATE_FINISH
 } game_state;
 
-/* main game state struct, holds all players, the dealer and state infomation */
+/* main game state struct, holds all players, the dealer and state information */
 typedef struct game_s {
     deck_s deck;
     uint8_t d_cards[MAX_NUM_CARDS];
@@ -130,7 +130,7 @@ void kick_player(int p);
 /* tests if a nickname is valid returning -1 if its not */
 int valid_nick(char *nick);
 
-/* returns a players index for the given socket, returns -1 if they dont exist */
+/* returns a players index for the given socket, returns -1 if they don't exist */
 int get_player_sock(struct sockaddr_storage store);
 
 /* returns the number of players in the game, regardless of their active value */
@@ -165,7 +165,7 @@ int hit(int p);
 int dealer_play();
 
 /**********************/
-/* userlist funcitons */
+/* userlist functions */
 /**********************/
 
 /* initializes the userlist */
@@ -178,7 +178,7 @@ void free_userlist();
  *  returns -1 on error */
 uint64_t get_user_money(char *nick);
 
-/* retieves the users position in userlist for the given nickname */
+/* retrieves the users position in userlist for the given nickname */
 int get_user(char *nick);
 
 /* adds the given player to the userlist and sets their money accordingly */
@@ -188,7 +188,7 @@ int add_player_to_list(char *nick, uint32_t money);
 /* round end functions */
 /***********************/
 
-/* calculates the end of the round and disributes winnings/losses */
+/* calculates the end of the round and distributes winnings/losses */
 void round_end();
 
 /* set all bankrupt players to kicked */
@@ -207,7 +207,7 @@ void reset_game();
 /* set the kick timer for the next kick */
 void set_timer();
 
-/* checks if the current player needs to be kicked for timout, and kicks them
+/* checks if the current player needs to be kicked for timeout, and kicks them
  *  if so also updates the state */
 int check_kick();
 

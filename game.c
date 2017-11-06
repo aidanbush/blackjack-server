@@ -127,7 +127,7 @@ void free_game() {
 
 /* add a new player to the game, using the given information
  *  returns index if added otherwise -2 if nick already taken, -1 if there was
- *  someother error*/
+ *  some other error*/
 int add_player(char *player_name, struct sockaddr_storage store) {
     //check if player with same nick already there
     if (get_player(player_name) != -1) {
@@ -195,12 +195,12 @@ int valid_nick(char *nick) {
     return 1;
 }
 
-/* compaires two sockaddr_storage structs and returns 0 if they are equal */
+/* compares two sockaddr_storage structs and returns 0 if they are equal */
 static int sock_cmp(struct sockaddr_storage fst, struct sockaddr_storage snd) {
     return memcmp(&fst, &snd, sizeof(struct sockaddr_storage));
 }
 
-/* returns a players index for the given socket, returns -1 if they dont exist */
+/* returns a players index for the given socket, returns -1 if they don't exist */
 int get_player_sock(struct sockaddr_storage store) {
     //for all players
     for (int  i = 0; i < game.max_players; i++)
@@ -526,7 +526,7 @@ uint64_t get_user_money(char *nick) {
     return userlist.users[i]->money;
 }
 
-/* retieves the users position in the hashtable for the given nickname */
+/* retrieves the users position in the hashtable for the given nickname */
 int get_user(char *nick) {
     for (int i = 0; i < userlist.max_users; i++)
        if (userlist.users[i] != NULL)
@@ -537,7 +537,7 @@ int get_user(char *nick) {
 
 /* adds the given player to the userlist and sets their money accordingly */
 int add_player_to_list(char *nick, uint32_t money) {
-    // if no space and must be reinited
+    // if no space and must be reinitialized
     if (userlist.max_users == 0)
         return -1;
     // check if already in if so update
@@ -564,7 +564,7 @@ int add_player_to_list(char *nick, uint32_t money) {
         return -1;
     }
     new_user->name = strncpy(new_user->name, nick, PLAYER_NAME_LEN);
-    //add nul terminator to be safe
+    //add null terminator to be safe
     new_user->name[PLAYER_NAME_LEN] = '\0';
     new_user->money = money;
 
@@ -623,7 +623,7 @@ static void player_lost(int p) {
     game.players[p]->bet = 0;// reset bet
 }
 
-/* calculates the end of the round and disributes winnings/losses */
+/* calculates the end of the round and distributes winnings/losses */
 void round_end() {
     //get dealers hand
     int d_value = d_hand_value();
@@ -748,14 +748,14 @@ void reset_game() {
     reset_bets();
     //reset dealers cards and num cards
     reset_dealer();
-    //curent palyer
+    //current player
     game.cur_player = -1;
     set_num_players();
 }
 
 // TIMER
 
-/* return different in miliseconds */
+/* return different in milliseconds */
 static int time_dif(struct timeval tv1, struct timeval tv2) {
     return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000;
 }
@@ -776,7 +776,7 @@ static int check_kick_timer() {
     return 0;
 }
 
-/* checks if the current player needs to be kicked for timout, and kicks them
+/* checks if the current player needs to be kicked for timeout, and kicks them
  *  if so also updates the state */
 int check_kick() {
     //check if timer is up and the current player is not -1

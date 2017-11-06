@@ -128,7 +128,7 @@ static int send_request() {
         if (game.players[i] != NULL) {
             if (sendto(sfd, packet, STATUS_LEN, 0,
                         (struct sockaddr *) &game.players[i]->sock,
-                        sizeof(game.players[i]->sock)) != STATUS_LEN)//check for EINTER otherwise bail
+                        sizeof(game.players[i]->sock)) != STATUS_LEN)//bail on fail
                 if (verbosity >= 1)
                     fprintf(stderr, "could not send to %s\n", game.players[i]->nick);
         }
@@ -201,7 +201,7 @@ static int op_ack(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 /* kicks or removes the player that sent the quit message */
 static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     if (verbosity >= 2)
-        fprintf(stderr, "recieved quit\n");
+        fprintf(stderr, "received quit\n");
 
     //get player and check they exist
     int p = get_player_sock(recv_store);
@@ -215,7 +215,7 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
     kick_player(p);
     if (verbosity >= 3)
         fprintf(stderr, "kicked player:%d\n", p);
-    //if state is idle or beting, and they have not bet delete them
+    //if state is idle or betting, and they have not bet delete them
     if (game.state == STATE_IDLE || (game.state == STATE_BET && game.players[p]->bet == 0)){
         delete_player(p);//delete them
     }
@@ -246,7 +246,7 @@ static int op_quit(uint8_t *packet, int len, struct sockaddr_storage recv_store)
 /* hits for the player that send a hit packet if it is a valid request */
 static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     if (verbosity >= 2)
-        fprintf(stderr, "recived hit\n");
+        fprintf(stderr, "received hit\n");
 
     int p = check_packet(packet, len, recv_store, HIT_LEN, STATE_PLAY);
     switch (p) {
@@ -302,7 +302,7 @@ static int op_hit(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
 /* stands for the player that send a stand packet if it is a valid request */
 static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
    if (verbosity >= 1)
-        fprintf(stderr, "recieved stand\n");
+        fprintf(stderr, "received stand\n");
 
     int p = check_packet(packet, len, recv_store, STAND_LEN, STATE_PLAY);
 
@@ -352,10 +352,10 @@ static int op_stand(uint8_t *packet, int len, struct sockaddr_storage recv_store
 }
 
 
-/* applys the bet for the player that send a bet packet if it is a valid request */
+/* apply the bet for the player that send a bet packet if it is a valid request */
 static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) {
     if (verbosity >= 1)
-        fprintf(stderr, "recieved bet\n");
+        fprintf(stderr, "received bet\n");
 
     int p = check_packet(packet, len, recv_store, BET_LEN, STATE_BET);
     switch (p) {
@@ -413,7 +413,7 @@ static int op_bet(uint8_t *packet, int len, struct sockaddr_storage recv_store) 
     next_player(game.cur_player);
     set_timer();
 
-    //update gamestate
+    //update game state
     if (game.cur_player == -1) {
         if (verbosity >= 3)
             fprintf(stderr, "state new STATE_PLAY, last player bet\n");
@@ -473,7 +473,7 @@ static int op_connect(uint8_t *packet, int len, struct sockaddr_storage recv_sto
         if (verbosity >= 1)
             fprintf(stderr, "send error add player fail\n");
         send_error(ERROR_OP_GEN, &recv_store, "unable to connect");
-        return -1;//if error return error dont respond to save memory???--------------
+        return -1;//if error return error don't respond to save memory
     } else if (pos == -2) {
         if (verbosity >= 1)
             fprintf(stderr, "send error nick taken\n");
@@ -734,7 +734,7 @@ void server() {
 
         // check error
         if (nrdy == -1) {
-            //if not einter
+            //if not EINTER
             if (errno != EINTR)
                 if (verbosity >= 1) perror("select");
             continue;

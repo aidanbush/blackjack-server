@@ -54,7 +54,7 @@ void free_msg_queue() {
 
 static void set_server_ack(uint8_t *msg) {
     msg_queue.serv_seq++;
-    if (msg_queue.serv_seq == 0)//since 0 if to notify that an ack was recieved
+    if (msg_queue.serv_seq == 0)//since 0 if to notify that an ack was received
         msg_queue.serv_seq++;
     *(uint32_t *)(msg + OFF_MSG_SERV_ACK) = htonl(msg_queue.serv_seq);
 }
@@ -113,8 +113,8 @@ void recive_ack(uint8_t *msg, int player) {
 
     for (int i = 0; i < MSG_BUF_LEN; i++) {
         if (msg_ack_queue.ack_list[player][i] == seq) {
-            msg_ack_queue.ack_list[player][i] = 0;//set to recived
-            //dont need to check if it was the last beause the messages can just wont be resent
+            msg_ack_queue.ack_list[player][i] = 0;//set to received
+            //don't need to check if it was the last because the messages can just won't be resent
             break;
         }
     }

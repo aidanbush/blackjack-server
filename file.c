@@ -1,9 +1,9 @@
 /* Author: Aidan Bush
  * Assign: Assign 2
  * Course: CMPT 361
- * Date:
- * File:
- * Description:
+ * Date: Nov. 5, 17
+ * File: file.c
+ * Description: persistent file functions
  */
 
 /* standard libraries */
@@ -19,7 +19,7 @@
 
 extern userlist_s userlist;
 
-/* reads from a file if posible and adds valid users to the userlist */
+/* reads from a file if possible and adds valid users to the userlist */
 int read_userlist_file(char *filename) {
     if (filename == NULL)
         return -1;
