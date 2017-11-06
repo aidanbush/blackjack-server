@@ -101,13 +101,6 @@ typedef struct game_s {
     struct timeval resend_timer;
 } game_s;
 
-// extern globals
-extern int verbosity;
-
-extern userlist_s userlist;
-extern game_rules rules;
-extern game_s game;
-
 /* deletes a player from the game struct and puts them in the userlist */
 int delete_player(int i);
 

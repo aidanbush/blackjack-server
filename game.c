@@ -25,6 +25,13 @@
 
 #define RESEND_DELAY    1// in seconds
 
+// extern globals
+extern int verbosity;
+
+extern userlist_s userlist;
+extern game_rules rules;
+extern game_s game;
+
 /* initializes a new player using the provided nickname, staring money, and socket */
 static player_s *init_player(char *nick, uint32_t start_money, struct sockaddr_storage store) {
     player_s *player = malloc(sizeof(player_s));
@@ -501,7 +508,7 @@ static int resize_userlist() {
     // rehash into array
     for (int i = 0; i < old_size; i++)
         if (old_users[i] != NULL)
-            hash_user(old_users[i]); // TODO return value here
+            hash_user(old_users[i]);
     // free old array
     free(old_users);
     return 1;
@@ -654,7 +661,7 @@ void round_end() {
             }
         }
     }
-    //reset deck if needed ---TODO may want to move into separate function
+    //reset deck if needed
     if (game.deck.cur_card > (game.deck.num_cards / 2)) {
         shuffle_cards();
         game.deck.cur_card = 0;
@@ -780,7 +787,7 @@ int check_kick() {
             game.state = STATE_IDLE;
         }
     } else {
-        kick_player(game.cur_player);//kick TODO fix currently broken
+        kick_player(game.cur_player);// kick player
     }
 
     //set timer

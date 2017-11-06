@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h> // make sure used
+#include <stdio.h>
 
 /* system libraries */
 #include <arpa/inet.h>
@@ -34,10 +34,14 @@
 #define OFF_PLAYER_CARDS    (OFF_PLAYER_BET) + 4
 #define OFF_PLAYER_LEN      41
 
-#define VALIDATE_OFF    OFF_MIN_BET // after seqnum
+#define VALIDATE_OFF    OFF_MIN_BET
 #define VALIDATE_LEN    ((STATUS_LEN) - (VALIDATE_OFF))
 
 #define CONNECT_NICK_OFF 1
+
+// extern globals
+extern game_rules rules;
+extern game_s game;
 
 /* adds the player state information to a given packet */
 static void packet_players(uint8_t *packet) {

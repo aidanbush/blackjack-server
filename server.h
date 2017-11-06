@@ -11,12 +11,6 @@
 
 #include "game.h"
 
-extern int verbosity;
-
-extern game_rules rules;
-extern game_s game;
-extern userlist_s userlist;
-
 /* main server function */
 void server();
 
