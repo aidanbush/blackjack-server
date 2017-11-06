@@ -1,2 +1,3 @@
 As far a i know you can play multiple rounds with mulitple players without any errors,
 I had some issues with kicking players, but that should be all fixed now
+I have not tested msgs that much so I added a MACRO _TEST_MSGS which enables the forwarding of messges
