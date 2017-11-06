@@ -73,7 +73,6 @@ static void free_player(player_s *p) {
 int delete_player(int i) {
     player_s *p = game.players[i];
     if (p == NULL) {
-        fprintf(stderr, "p == NULL\n");
         return -1;
     }
     int add = add_player_to_list(p->nick, p->money);
@@ -635,28 +634,36 @@ void round_end() {
     int p_value;
     //for every player
     for (int i = 0; i < game.max_players; i++) {
-        //if not null
+        //if current player is active
         if (game.players[i] != NULL && game.players[i]->active != PLAYER_A_INACTIVE) {
             p_value = player_hand_value(i);
             if (p_value > 21)// if bust
                 p_value = -1;
-            if (verbosity >= 3) fprintf(stderr, "results for player :%d\n", i);
+
+            if (verbosity >= 3)
+                fprintf(stderr, "results for player :%d\n", i);
+
             if (blackjack(i) == 1) {// if blackjack
                 if(d_black == 1) {// if both no one wins
-                    if (verbosity >= 3) fprintf(stderr, "both blackjack\n");
+                    if (verbosity >= 3)
+                        fprintf(stderr, "both blackjack\n");
                     player_tie(i);//return money
                 } else {
-                    if (verbosity >= 3) fprintf(stderr, "player blackjack\n");
+                    if (verbosity >= 3)
+                        fprintf(stderr, "player blackjack\n");
                     player_blackjack(i);//win 1.5x money
                 }
             } else if (p_value > d_value) {//else if above
-                if (verbosity >= 3) fprintf(stderr, "player won\n");
+                if (verbosity >= 3)
+                    fprintf(stderr, "player won\n");
                 player_win(i);//win money
             } else if (p_value == d_value) {//else if tie
-                if (verbosity >= 3) fprintf(stderr, "tie\n");
+                if (verbosity >= 3)
+                    fprintf(stderr, "tie\n");
                 player_tie(i);//return money
             } else {//else lose
-                if (verbosity >= 3) fprintf(stderr, "player lost\n");
+                if (verbosity >= 3)
+                    fprintf(stderr, "player lost\n");
                 player_lost(i);//lose money
             }
         }
@@ -672,7 +679,8 @@ void round_end() {
 void kick_bankrupt() {
     for (int i = 0; i < game.max_players; i++)
         if (game.players[i] != NULL && game.players[i]->money < rules.min_bet) {
-            if (verbosity >= 3) fprintf(stderr, "kicking %d due to insufficient funds\n", i);
+            if (verbosity >= 3)
+                fprintf(stderr, "kicking %d due to insufficient funds\n", i);
             game.players[i]->active = PLAYER_A_KICKED;
         }
 }
@@ -775,7 +783,8 @@ int check_kick() {
     if (!(check_kick_timer() && game.cur_player != -1))
         return 0;
 
-    fprintf(stderr, "kicking player: %d\n", game.cur_player);
+    if (verbosity >= 3)
+        fprintf(stderr, "kicking player: %d\n", game.cur_player);
     //if in bet state and have not made a bet or idle state
     if (game.state == STATE_IDLE ||
                 (game.state == STATE_BET
@@ -783,7 +792,8 @@ int check_kick() {
                 && game.players[game.cur_player]->bet == 0)) {
         delete_player(game.cur_player);//delete
         if (num_players() == 0) {
-            if (verbosity >= 1) fprintf(stderr, "state now STATE_IDLE, last player deleted\n");
+            if (verbosity >= 3)
+                fprintf(stderr, "state now STATE_IDLE, last player deleted\n");
             game.state = STATE_IDLE;
         }
     } else {
