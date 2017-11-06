@@ -3,7 +3,7 @@
  * Course: CMPT 361
  * Date: Oct 25, 17
  * File: server.c
- * Description: contains the main server loop and main packet responce functions
+ * Description: contains the main server loop and main packet response functions
  */
 
 /* standard libraries */
@@ -121,7 +121,7 @@ static int send_request() {
     if (verbosity >= 4)
         fprintf(stderr, "sending broadcast update\n");
     //create packet
-    uint8_t *packet = create_status_packet(game.cur_player + 1);//check that the corect player
+    uint8_t *packet = create_status_packet(game.cur_player + 1);//check that the correct player
 
     // send packet to all players
     for (int i = 0; i < game.max_players; i++) {

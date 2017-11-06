@@ -21,7 +21,7 @@
 #include "msg.h"
 #include "file.h"
 
-// globals for tracking game logic and presistand date
+// globals for tracking game logic and persistent data
 int verbosity = 0;
 game_rules rules;
 game_s game;
@@ -32,7 +32,7 @@ extern msg_ack_list msg_ack_queue;
 
 /* prints the usage message and returns */
 void print_usage(char *p_name) {
-    printf("Usage : %s  [-options] [persistant data file]\n"
+    printf("Usage : %s  [-options] [persistent data file]\n"
         "Blackjack server as specified in RFC n + 21\n\n"
         "Options:\n"
         "    -v verbose [use more than once for higher levels]\n"
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     //write to file
     write_userlist_file(filename);
 
-    // teardown game
+    // tear down game
     free_game();
     free_deck();
     free_userlist();
