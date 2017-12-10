@@ -1,4 +1,1 @@
-As far a i know you can play multiple rounds with multiple players without any errors,
-I had some issues with kicking players, but that should be all fixed now
-I have not tested msgs that much so I added a MACRO _TEST_MSGS which enables the forwarding of messages
-I also have not tested the file functionality that much
+#UDP Blackjack server
